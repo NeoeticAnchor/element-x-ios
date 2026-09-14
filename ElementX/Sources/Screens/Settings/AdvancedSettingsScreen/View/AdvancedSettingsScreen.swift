@@ -21,6 +21,7 @@ struct AdvancedSettingsScreen: View {
     
     var body: some View {
         Form {
+            irisNetworkSection
             Section {
                 ListRow(label: .plain(title: L10n.commonAppearance),
                         kind: .picker(selection: $context.appAppearance,
@@ -49,6 +50,65 @@ struct AdvancedSettingsScreen: View {
         .compoundList()
         .navigationTitle(L10n.commonAdvancedSettings)
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private var irisNetworkSection: some View {
+        Section {
+            ListRow(label: .plain(title: UntranslatedL10n.screenIrisDisableAll), kind: .button {
+                context.send(viewAction: .disableIrisNetwork)
+            })
+            networkToggle(UntranslatedL10n.screenIrisAnalytics, \.analyticsEnabled)
+            networkToggle(UntranslatedL10n.screenIrisReports, \.reportsEnabled)
+            networkToggle(UntranslatedL10n.screenIrisMaps, \.mapsEnabled)
+            networkToggle(UntranslatedL10n.screenIrisCalls, \.callsEnabled)
+            networkToggle(UntranslatedL10n.screenIrisScanner, \.scannerEnabled)
+            networkToggle(UntranslatedL10n.screenIrisPush, \.pushEnabled)
+            networkToggle(UntranslatedL10n.screenIrisLinks, \.externalLinksEnabled)
+            networkToggle(UntranslatedL10n.screenIrisPreviews, \.linkPreviewsEnabled)
+            networkToggle(UntranslatedL10n.screenIrisSuggestions, \.systemSuggestionsEnabled)
+            DisclosureGroup(UntranslatedL10n.screenIrisEndpoints) {
+                networkField(UntranslatedL10n.screenIrisAnalyticsHost, \.analyticsHost)
+                networkField(UntranslatedL10n.screenIrisAnalyticsKey, \.analyticsKey)
+                networkField(UntranslatedL10n.screenIrisRageshake, \.rageshakeURL)
+                networkField(UntranslatedL10n.screenIrisSentry, \.sentryDSN)
+                networkField(UntranslatedL10n.screenIrisMapBase, \.mapBaseURL)
+                networkField(UntranslatedL10n.screenIrisMapKey, \.mapAPIKey)
+                networkField(UntranslatedL10n.screenIrisMapLight, \.mapLightStyle)
+                networkField(UntranslatedL10n.screenIrisMapDark, \.mapDarkStyle)
+                networkField(UntranslatedL10n.screenIrisCallUrl, \.callURL)
+                networkField(UntranslatedL10n.screenIrisScannerUrl, \.scannerURL)
+                networkField(UntranslatedL10n.screenIrisPushUrl, \.pushGatewayURL)
+            }
+            ListRow(label: .plain(title: L10n.actionSave), kind: .button {
+                context.send(viewAction: .saveIrisNetwork)
+            })
+        } header: {
+            Text(UntranslatedL10n.screenIrisTitle).compoundListSectionHeader()
+        } footer: {
+            Text(UntranslatedL10n.screenIrisDescription).compoundListSectionFooter()
+        }
+    }
+    
+    private func networkToggle(_ title: String, _ keyPath: WritableKeyPath<IrisNetworkConfiguration, Bool>) -> some View {
+        ListRow(label: .plain(title: title), kind: .toggle(Binding(get: {
+            context.irisNetwork[keyPath: keyPath]
+        }, set: { context.irisNetwork[keyPath: keyPath] = $0 })))
+    }
+    
+    private func networkField(_ title: String, _ keyPath: WritableKeyPath<IrisNetworkConfiguration, String>) -> some View {
+        ListRow(kind: .custom {
+            VStack(alignment: .leading) {
+                Text(title).font(.compound.bodySM).foregroundStyle(.compound.textSecondary)
+                TextField(title, text: Binding(get: {
+                    context.irisNetwork[keyPath: keyPath]
+                }, set: { context.irisNetwork[keyPath: keyPath] = $0 }))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .font(.compound.bodyMD)
+            }
+            .padding(.horizontal, ListRowPadding.horizontal)
+            .padding(.vertical, ListRowPadding.vertical)
+        })
     }
     
     @ViewBuilder

@@ -617,6 +617,7 @@ class TimelineController: TimelineControllerProtocol {
     }
     
     private func donateSendMessageIntent() async {
+        guard appSettings.irisNetwork.systemSuggestionsEnabled else { return }
         guard let displayName = roomProxy.details.name ?? roomProxy.details.canonicalAlias, !displayName.isEmpty else {
             MXLog.error("Failed donating send message intent, room missing name or alias.")
             return

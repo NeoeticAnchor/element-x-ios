@@ -107,6 +107,10 @@ class CallScreenViewModel: CallScreenViewModelType, CallScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
+        appSettings.irisNetworkPublisher.dropFirst().receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.actionsSubject.send(.dismiss) }
+            .store(in: &cancellables)
+        
         setupCall()
     }
     
@@ -155,7 +159,7 @@ class CallScreenViewModel: CallScreenViewModelType, CallScreenViewModelProtocol 
     
     private func setupCall() {
         Task { [weak self] in
-            guard let self else { return }
+            guard let self, appSettings.irisNetwork.callsEnabled else { return }
             
             let baseURL = if let baseURLOverride = configuration.elementCallBaseURLOverride {
                 baseURLOverride

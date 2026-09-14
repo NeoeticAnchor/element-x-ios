@@ -11,6 +11,7 @@ import MatrixRustSDK
 import SwiftUI
 
 struct SessionVerificationScreen: View {
+    @Environment(\.openURL) private var openURL
     enum AccessibilityFocus {
         case title
     }
@@ -93,7 +94,7 @@ struct SessionVerificationScreen: View {
                                                       mediaProvider: context.mediaProvider)
             case .userInitiator:
                 Button(L10n.actionLearnMore) {
-                    UIApplication.shared.open(context.viewState.learnMoreURL)
+                    openURL(context.viewState.learnMoreURL)
                 }
                 .buttonStyle(.compound(.tertiary, size: .small))
             default:

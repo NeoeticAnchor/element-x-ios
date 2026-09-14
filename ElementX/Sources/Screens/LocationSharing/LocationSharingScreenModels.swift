@@ -46,6 +46,7 @@ enum LocationSharingInteractionMode: Hashable {
 }
 
 struct LocationSharingScreenViewState: BindableState {
+    var allowsExternalMaps = false
     init(interactionMode: LocationSharingInteractionMode,
          mapURLBuilder: MapTilerURLBuilderProtocol,
          ownUserID: String) {

@@ -20,7 +20,8 @@ class ClientProxy: ClientProxyProtocol {
     private let analyticsService: AnalyticsServiceProtocol
     
     let mediaLoader: MediaLoaderProtocol
-    let contentScanner: ContentScannerProxyProtocol?
+    private var contentScannerUpdateTask: Task<Void, Never>?
+    private(set) var contentScanner: ContentScannerProxyProtocol?
     
     private var roomListService: RoomListService
     // periphery: ignore - only for retain
@@ -216,14 +217,12 @@ class ClientProxy: ClientProxyProtocol {
         
         mediaLoader = MediaLoader(client: client)
         
-        // Route media downloads through a content scanner when one has been configured for the server,
-        // and expose a proxy for the active scanning of content in the timeline.
-        if let contentScannerURL = appSettings.contentScannerURL.publisher.value, let client = client as? Client {
-            let scanner = ContentScanner(scannerUrl: contentScannerURL.absoluteString)
+        contentScanner = nil
+        if let client = client as? Client {
+            let url = appSettings.contentScannerURL.publisher.value
+            let scanner = url.map { ContentScanner(scannerUrl: $0.absoluteString) }
             await client.setContentScanner(contentScanner: scanner)
-            contentScanner = ContentScannerProxy(contentScanner: scanner, client: client)
-        } else {
-            contentScanner = nil
+            contentScanner = scanner.map { ContentScannerProxy(contentScanner: $0, client: client, appSettings: appSettings, configuredURL: url) }
         }
         
         notificationSettings = await NotificationSettingsProxy(notificationSettings: client.getNotificationSettings())
@@ -308,6 +307,24 @@ class ClientProxy: ClientProxyProtocol {
         Task {
             guard case .success(true) = await isUserStatusSupported() else { return }
             client.enableAutomaticCallStatus(enabled: true)
+        }
+        
+        if let client = client as? Client {
+            appSettings.contentScannerURL.publisher
+                .dropFirst()
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self, weak client] _ in
+                    guard let self, let client else { return }
+                    let previousTask = self.contentScannerUpdateTask
+                    self.contentScannerUpdateTask = Task {
+                        await previousTask?.value
+                        let url = appSettings.contentScannerURL.publisher.value
+                        let scanner = url.map { ContentScanner(scannerUrl: $0.absoluteString) }
+                        await client.setContentScanner(contentScanner: scanner)
+                        self.contentScanner = scanner.map { ContentScannerProxy(contentScanner: $0, client: client, appSettings: appSettings, configuredURL: url) }
+                    }
+                }
+                .store(in: &cancellables)
         }
         
         liveLocationOwnInfoUpdatesListenerTaskHandle = createLiveLocationOwnInfoUpdatesObserver()
@@ -812,6 +829,10 @@ class ClientProxy: ClientProxyProtocol {
         } catch {
             MXLog.error("Failed logging out with error: \(error)")
         }
+    }
+    
+    func deletePusher(identifiers: PusherIdentifiers) async throws {
+        try await client.deletePusher(identifiers: identifiers)
     }
     
     func setPusher(with configuration: PusherConfiguration) async throws {

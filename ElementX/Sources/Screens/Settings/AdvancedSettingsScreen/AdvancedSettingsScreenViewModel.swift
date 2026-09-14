@@ -12,6 +12,7 @@ import SwiftUI
 typealias AdvancedSettingsScreenViewModelType = StateStoreViewModelV2<AdvancedSettingsScreenViewState, AdvancedSettingsScreenViewAction>
 
 class AdvancedSettingsScreenViewModel: AdvancedSettingsScreenViewModelType, AdvancedSettingsScreenViewModelProtocol {
+    private let advancedSettings: AdvancedSettingsProtocol
     private let analytics: AnalyticsServiceProtocol
     private let clientProxy: ClientProxyProtocol
     private let userIndicatorController: UserIndicatorControllerProtocol
@@ -23,6 +24,7 @@ class AdvancedSettingsScreenViewModel: AdvancedSettingsScreenViewModelType, Adva
          analytics: AnalyticsServiceProtocol,
          clientProxy: ClientProxyProtocol,
          userIndicatorController: UserIndicatorControllerProtocol) {
+        self.advancedSettings = advancedSettings
         self.analytics = analytics
         self.clientProxy = clientProxy
         self.userIndicatorController = userIndicatorController
@@ -47,6 +49,16 @@ class AdvancedSettingsScreenViewModel: AdvancedSettingsScreenViewModelType, Adva
     
     override func process(viewAction: AdvancedSettingsScreenViewAction) {
         switch viewAction {
+        case .saveIrisNetwork:
+            guard state.bindings.irisNetwork.hasValidEndpoints else {
+                userIndicatorController.submitIndicator(.init(title: UntranslatedL10n.screenIrisInvalidEndpoints))
+                return
+            }
+            saveIrisNetwork()
+        case .disableIrisNetwork:
+            state.bindings.irisNetwork.disableAll()
+            saveIrisNetwork()
+            
         case .optimizeMediaUploadsChanged:
             // Note: Using a view action here as sinking the AppSettings publisher tracks the initial value.
             analytics.trackInteraction(name: state.bindings.optimizeMediaUploads ? .MobileSettingsOptimizeMediaUploadsEnabled : .MobileSettingsOptimizeMediaUploadsDisabled)
@@ -55,6 +67,15 @@ class AdvancedSettingsScreenViewModel: AdvancedSettingsScreenViewModelType, Adva
         case let .updateTimelineMediaVisibility(value):
             timelineMediaVisibilityTask = Task { [weak self] in await self?.updateTimelineMediaVisibility(value) }
         }
+    }
+    
+    private func saveIrisNetwork() {
+        advancedSettings.irisNetwork = state.bindings.irisNetwork
+        advancedSettings.applyIrisNetwork()
+        if !state.bindings.irisNetwork.analyticsEnabled {
+            analytics.optOut()
+        }
+        userIndicatorController.submitIndicator(.init(title: UntranslatedL10n.screenIrisSaved))
     }
     
     private func updateTimelineMediaVisibility(_ value: TimelineMediaVisibility) async {

@@ -276,6 +276,14 @@ class MockScreen: Identifiable {
             retainedState.append(flowCoordinator)
             
             return navigationStackCoordinator
+        case .irisNetworkSettings:
+            let coordinator = AdvancedSettingsScreenCoordinator(parameters: .init(appSettings: appSettings,
+                                                                                  analytics: analytics,
+                                                                                  clientProxy: ClientProxyMock(.init()),
+                                                                                  userIndicatorController: userIndicatorController))
+            let navigation = NavigationStackCoordinator()
+            navigation.setRootCoordinator(coordinator)
+            return navigation
         case .bugReport:
             let navigationStackCoordinator = NavigationStackCoordinator()
             let clientProxy = ClientProxyMock(.init(userID: "@mock:client.com", roomSummaryProvider: RoomSummaryProviderMock(.init(state: .loaded(.mockRooms)))))

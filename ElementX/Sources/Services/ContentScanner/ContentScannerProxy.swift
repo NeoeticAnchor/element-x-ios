@@ -11,16 +11,23 @@ import Foundation
 
 nonisolated struct ContentScannerProxy: ContentScannerProxyProtocol {
     private let contentScanner: ContentScanner
+    private let appSettings: AppSettings?
+    private let configuredURL: URL?
     /// The client is held weakly for the same reason as in `MediaLoader` - to avoid keeping the
     /// underlying `MatrixRustSDK.Client` alive longer than the owning `ClientProxy`.
     private weak var client: Client?
     
-    init(contentScanner: ContentScanner, client: Client) {
+    init(contentScanner: ContentScanner, client: Client, appSettings: AppSettings? = nil, configuredURL: URL? = nil) {
+        self.appSettings = appSettings
+        self.configuredURL = configuredURL
         self.contentScanner = contentScanner
         self.client = client
     }
     
     func scan(mediaSource: MediaSourceProxy) async -> Result<Bool, ContentScannerProxyError> {
+        if let appSettings, appSettings.contentScannerURL.publisher.value != configuredURL {
+            return .failure(.sdkError(URLError(.cancelled)))
+        }
         guard let client else { return .failure(.missingClient) }
         
         do {

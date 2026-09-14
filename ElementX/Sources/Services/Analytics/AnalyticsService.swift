@@ -8,18 +8,25 @@
 
 import AnalyticsEvents
 import Combine
+import Foundation
 import PostHog
 
 class AnalyticsService: AnalyticsServiceProtocol {
     /// The analytics client to send events with.
     private let client: AnalyticsClientProtocol
     private let appSettings: AppSettings
+    private var networkSubscription: AnyCancellable?
     
     let signpost = Signposter()
     
     init(client: AnalyticsClientProtocol, appSettings: AppSettings) {
         self.client = client
         self.appSettings = appSettings
+        networkSubscription = appSettings.irisNetworkPublisher.dropFirst().receive(on: DispatchQueue.main).sink { [weak self] _ in
+            guard let self else { return }
+            self.client.stop()
+            self.startIfEnabled()
+        }
     }
     
     var shouldShowAnalyticsPrompt: Bool {
@@ -28,7 +35,7 @@ class AnalyticsService: AnalyticsServiceProtocol {
     }
     
     var isEnabled: Bool {
-        appSettings.analyticsConsentState == .optedIn
+        appSettings.irisNetwork.analyticsEnabled && appSettings.analyticsConsentState == .optedIn
     }
     
     func optIn() {

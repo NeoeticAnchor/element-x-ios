@@ -10,6 +10,7 @@ import SwiftUI
 
 struct LocationShareSheet: View {
     let annotation: LocationAnnotation
+    var allowsExternalMaps = false
     
     private var location: CLLocationCoordinate2D {
         annotation.coordinate
@@ -20,8 +21,8 @@ struct LocationShareSheet: View {
     }
     
     var body: some View {
-        AppActivityView(activityItems: [ShareToMapsAppActivity.MapsAppType.apple.activityURL(for: location, senderName: senderName)],
-                        applicationActivities: ShareToMapsAppActivity.MapsAppType.allCases.map { ShareToMapsAppActivity(type: $0, location: location, senderName: senderName) })
+        AppActivityView(activityItems: ["geo:\(location.latitude),\(location.longitude)"],
+                        applicationActivities: allowsExternalMaps ? ShareToMapsAppActivity.MapsAppType.allCases.map { ShareToMapsAppActivity(type: $0, location: location, senderName: senderName) } : [])
             .ignoresSafeArea(edges: .bottom)
             .presentationDetents([.medium, .large])
             .presentationCompactAdaptation(compactPresentation)

@@ -241,6 +241,8 @@ protocol ClientProxyProtocol: AnyObject {
     
     func logout() async
     
+    func deletePusher(identifiers: PusherIdentifiers) async throws
+    
     func setPusher(with configuration: PusherConfiguration) async throws
     
     func searchUsers(searchTerm: String, limit: UInt) async -> Result<SearchUsersResults, ClientProxyError>

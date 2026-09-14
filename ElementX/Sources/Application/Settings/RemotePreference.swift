@@ -14,7 +14,8 @@ import Combine
 /// Unlike ``UserPreference``, this type of setting isn't settable by the user, nor is the
 /// remote value persisted between app launches.
 nonisolated class RemotePreference<T: Equatable> {
-    private let defaultValue: T
+    private var defaultValue: T
+    private let allowsRemoteConfiguration: Bool
     private let subject: CurrentValueSubject<T, Never>
     var publisher: CurrentValuePublisher<T, Never> {
         subject.asCurrentValuePublisher()
@@ -24,12 +25,19 @@ nonisolated class RemotePreference<T: Equatable> {
         subject.value != defaultValue
     }
     
-    init(_ defaultValue: T) {
+    init(_ defaultValue: T, allowsRemoteConfiguration: Bool = true) {
+        self.allowsRemoteConfiguration = allowsRemoteConfiguration
         self.defaultValue = defaultValue
         subject = .init(defaultValue)
     }
     
     func applyRemoteValue(_ value: T) {
+        guard allowsRemoteConfiguration else { return }
+        subject.send(value)
+    }
+    
+    func setLocalValue(_ value: T) {
+        defaultValue = value
         subject.send(value)
     }
     

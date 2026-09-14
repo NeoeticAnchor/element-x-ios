@@ -17,6 +17,7 @@ nonisolated struct NotificationContentBuilder {
     let messageEventStringBuilder: RoomMessageEventStringBuilder
     let notificationSoundName: UNNotificationSoundName
     let userSession: NSEUserSessionProtocol
+    var systemSuggestionsEnabled = false
     
     /// Process the given notification item proxy
     /// - Parameters:
@@ -312,7 +313,7 @@ nonisolated struct NotificationContentBuilder {
         interaction.direction = .incoming
         
         // Donate the interaction before updating notification content.
-        if !ProcessInfo.isRunningTests {
+        if systemSuggestionsEnabled, !ProcessInfo.isRunningTests {
             try? await interaction.donate()
         }
         

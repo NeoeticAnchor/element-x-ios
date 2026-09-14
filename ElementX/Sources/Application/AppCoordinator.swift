@@ -113,7 +113,7 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
         
         userIndicatorController = UserIndicatorController()
         
-        elementCallService = ElementCallService()
+        elementCallService = ElementCallService(appSettings: appSettings)
         
         navigationRootCoordinator = NavigationRootCoordinator()
         
@@ -170,6 +170,22 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
         observeAppLockChanges()
         
         registerBackgroundAppRefresh()
+        
+        appSettings.irisNetworkPublisher
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [bugReportService, analyticsService, appSettings] _ in
+                if !appSettings.irisNetwork.systemSuggestionsEnabled {
+                    INInteraction.deleteAll { error in
+                        if error != nil {
+                            MXLog.error("Could not remove donated system interactions.")
+                        }
+                    }
+                }
+                SentrySDK.close()
+                Self.setupSentry(bugReportService: bugReportService, appSettings: appSettings, analytics: analyticsService)
+            }
+            .store(in: &cancellables)
         
         appSettings.analyticsConsentStatePublisher
             .dropFirst() // Sentry is configured during init; only reconfigure when consent state actually changes
@@ -386,7 +402,12 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
     
     // MARK: - NotificationManagerDelegate
     
+    func allowsExternalURL(_ url: URL) -> Bool {
+        url.scheme == "app-settings" || url.host == appSettings.websiteURL.host || appSettings.irisNetwork.externalLinksEnabled
+    }
+    
     func registerForRemoteNotifications() {
+        guard appSettings.irisNetwork.pushEnabled, appSettings.enableNotifications else { return }
         UIApplication.shared.registerForRemoteNotifications()
     }
     
@@ -777,7 +798,7 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
                                                   elementCallService: elementCallService,
                                                   timelineControllerFactory: TimelineControllerFactory(appSettings: appSettings),
                                                   emojiProvider: EmojiProvider(appSettings: appSettings),
-                                                  linkMetadataProvider: LinkMetadataProvider(),
+                                                  linkMetadataProvider: LinkMetadataProvider(appSettings: appSettings),
                                                   appMediator: appMediator,
                                                   appSettings: appSettings,
                                                   appHooks: appHooks,
@@ -972,7 +993,7 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
         #if DEBUG
         options.enabled = false
         #else
-        options.enabled = appSettings.analyticsConsentState == .optedIn
+        options.enabled = appSettings.irisNetwork.reportsEnabled
         #endif
         
         options.dsn = bugReportSentryURL.absoluteString

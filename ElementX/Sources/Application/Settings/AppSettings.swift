@@ -17,6 +17,8 @@ import SwiftUI
 
 /// Common settings between app and NSE
 nonisolated protocol CommonSettingsProtocol: AnyObject, Sendable {
+    var allowSystemSuggestions: Bool { get }
+    
     var lastNotificationBootTime: TimeInterval? { get set }
     var selectedNotificationTone: NotificationTone? { get set }
     var lastKnownBadgeCount: Int { get set }
@@ -68,6 +70,8 @@ final nonisolated class AppSettings: @unchecked Sendable {
     func resetAllSettings() {
         MXLog.warning("Resetting the AppSettings.")
         store.reset()
+        irisNetwork = IrisNetworkConfiguration()
+        applyIrisNetwork()
     }
     
     func resetSessionSpecificSettings() {
@@ -119,7 +123,8 @@ final nonisolated class AppSettings: @unchecked Sendable {
         self.accountProvisioningHost = accountProvisioningHost
         self.bugReportApplicationID = bugReportApplicationID
         self.analyticsTermsURL = analyticsTermsURL
-        self.mapTilerConfiguration = RemotePreference(mapTilerConfiguration)
+        self.mapTilerConfiguration = RemotePreference(mapTilerConfiguration, allowsRemoteConfiguration: false)
+        applyIrisNetwork()
     }
     
     // MARK: - Application
@@ -143,9 +148,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
     ///
     /// Account provider is the friendly term for the server name. It should not contain an `https` prefix and should
     /// match the last part of the user ID. For example `example.com` and not `https://matrix.example.com`.
-    private(set) var accountProviders = ["matrix.org"]
+    private(set) var accountProviders = ["hermes.irisr.art"]
     /// Whether or not the user is allowed to manually enter their own account provider or must select from one of `defaultAccountProviders`.
-    private(set) var allowOtherAccountProviders = true
+    private(set) var allowOtherAccountProviders = false
     /// Whether the components surrounding the app brand/logo should be hidden or not
     private(set) var hideBrandChrome = false
     
@@ -153,30 +158,30 @@ final nonisolated class AppSettings: @unchecked Sendable {
     let backgroundAppRefreshTaskIdentifier = "io.element.elementx.background.refresh"
     
     /// A URL where users can go read more about the app.
-    private(set) var websiteURL: URL = "https://element.io"
+    private(set) var websiteURL: URL = "https://hermes.irisr.art"
     /// A URL that contains the app's logo that may be used when showing content in a web view.
-    private(set) var logoURL: URL = "https://element.io/mobile-icon.png"
+    private(set) var logoURL: URL = "https://hermes.irisr.art/mobile-icon.png"
     /// A URL that contains that app's copyright notice.
-    private(set) var copyrightURL: URL = "https://element.io/copyright"
+    private(set) var copyrightURL: URL = "https://hermes.irisr.art/copyright"
     /// A URL that contains the app's Terms of use.
-    private(set) var acceptableUseURL: URL = "https://element.io/acceptable-use-policy-terms"
+    private(set) var acceptableUseURL: URL = "https://hermes.irisr.art/acceptable-use-policy-terms"
     /// A URL that contains the app's Privacy Policy.
-    private(set) var privacyURL: URL = "https://element.io/privacy"
+    private(set) var privacyURL: URL = "https://hermes.irisr.art/privacy"
     /// A URL where users can go read more about encryption in general.
-    private(set) var encryptionURL: URL = "https://element.io/help#encryption"
+    private(set) var encryptionURL: URL = "https://hermes.irisr.art/help#encryption"
     /// A URL where users can go read more about device verification..
-    private(set) var deviceVerificationURL: URL = "https://element.io/help#encryption-device-verification"
+    private(set) var deviceVerificationURL: URL = "https://hermes.irisr.art/help#encryption-device-verification"
     /// A URL where users can go read more about the chat backup.
-    private(set) var chatBackupDetailsURL: URL = "https://element.io/help#encryption5"
+    private(set) var chatBackupDetailsURL: URL = "https://hermes.irisr.art/help#encryption5"
     /// A URL where users can go read more about identity pinning violations
-    private(set) var identityPinningViolationDetailsURL: URL = "https://element.io/help#encryption18"
+    private(set) var identityPinningViolationDetailsURL: URL = "https://hermes.irisr.art/help#encryption18"
     /// A URL describing how history sharing works
-    private(set) var historySharingDetailsURL: URL = "https://element.io/en/help#e2ee-history-sharing"
+    private(set) var historySharingDetailsURL: URL = "https://hermes.irisr.art/en/help#e2ee-history-sharing"
     
     /// Any domains that Element web may be hosted on - used for handling links.
-    private(set) var elementWebHosts = ["app.element.io", "staging.element.io", "develop.element.io"]
+    private(set) var elementWebHosts = ["hermes.irisr.art"]
     /// The domain that account provisioning links will be hosted on - used for handling the links.
-    private(set) var accountProvisioningHost = "mobile.element.io"
+    private(set) var accountProvisioningHost = "hermes.irisr.art"
     /// The App Store URL for Element Pro, shown to the user when a homeserver requires that app.
     /// **Note:** This property isn't overridable as it in unexpected for forks to come across the error (or to even have a "Pro" app).
     let elementProAppStoreURL: URL = "https://apps.apple.com/app/element-pro-for-work/id6502951615"
@@ -207,10 +212,10 @@ final nonisolated class AppSettings: @unchecked Sendable {
     // MARK: - Authentication
     
     /// Any pre-defined static client registrations for OAuth issuers.
-    let oAuthStaticRegistrations: [URL: String] = ["https://id.thirdroom.io/realms/thirdroom": "elementx"]
+    let oAuthStaticRegistrations: [URL: String] = [:]
     /// The redirect URL used for OAuth. For the normal case we don't actually need the bundle ID as the web authentication session handles the redirect internally.
     /// However in the case where MAS sends the user to an external app, we need to make sure that the system will open the correct variant of the app (e.g. Nightly).
-    private(set) nonisolated(unsafe) var oAuthRedirectURL: URL! = URL(string: "https://element.io/oauth/ios/\(InfoPlistReader.main.bundleIdentifier)")
+    private(set) nonisolated(unsafe) var oAuthRedirectURL: URL! = URL(string: "https://hermes.irisr.art/oauth/ios/\(InfoPlistReader.main.bundleIdentifier)")
     /// A path that is appended to `websiteURL` to form the OAuth `clientURI`. MAS uses `clientURI` as the identifier for a specific app, allowing us to
     /// distinguish the various clients we have for Android, iOS and Web from each other.
     /// Intentionally a distinct property so it can be easily overridden without having to manipulate the website URL.
@@ -241,12 +246,12 @@ final nonisolated class AppSettings: @unchecked Sendable {
         #endif
     }
     
-    private(set) var pushGatewayBaseURL: URL = "https://matrix.org"
+    private(set) var pushGatewayBaseURL: URL = "https://hermes.irisr.art"
     var pushGatewayNotifyEndpoint: URL {
-        pushGatewayBaseURL.appending(path: "_matrix/push/v1/notify")
+        (irisNetwork.endpoint(irisNetwork.pushGatewayURL, enabled: irisNetwork.pushEnabled) ?? pushGatewayBaseURL).appending(path: "_matrix/push/v1/notify")
     }
     
-    @UserPreference(defaultValue: true)
+    @UserPreference(defaultValue: false)
     var enableNotifications: Bool
     
     @UserPreference(defaultValue: true)
@@ -281,9 +286,13 @@ final nonisolated class AppSettings: @unchecked Sendable {
     
     // MARK: - Bug report
     
-    let bugReportRageshakeURL: RemotePreference<RageshakeConfiguration> = .init(Secrets.rageshakeURL.map { .url(URL(string: $0)!) } ?? .disabled) // swiftlint:disable:this force_unwrapping
-    let bugReportSentryURL: URL? = Secrets.sentryDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping
-    let bugReportSentryRustURL: URL? = Secrets.sentryRustDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping
+    let bugReportRageshakeURL = RemotePreference<RageshakeConfiguration>(.disabled, allowsRemoteConfiguration: false)
+    var bugReportSentryURL: URL? {
+        irisNetwork.endpoint(irisNetwork.sentryDSN, enabled: irisNetwork.reportsEnabled, isSentryDSN: true)
+    }
+    
+    // Rust crash transport has no per-session stop mechanism; retain local traces for explicit bug reports.
+    let bugReportSentryRustURL: URL? = nil
     /// The name allocated by the bug report server
     private(set) var bugReportApplicationID = "element-x-ios"
     
@@ -291,7 +300,7 @@ final nonisolated class AppSettings: @unchecked Sendable {
     
     /// The base URL of the content scanner server used to scan media before it is downloaded.
     /// `nil` when content scanning is disabled.
-    let contentScannerURL: RemotePreference<URL?> = .init(nil)
+    let contentScannerURL = RemotePreference<URL?>(nil, allowsRemoteConfiguration: false)
     
     // MARK: - Encryption
     
@@ -302,17 +311,17 @@ final nonisolated class AppSettings: @unchecked Sendable {
     // MARK: - Analytics
     
     /// The configuration to use for analytics. Set to `nil` to disable analytics.
-    let analyticsConfiguration: AnalyticsConfiguration? = AppSettings.makeAnalyticsConfiguration()
+    var analyticsConfiguration: AnalyticsConfiguration? {
+        guard let host = irisNetwork.endpoint(irisNetwork.analyticsHost, enabled: irisNetwork.analyticsEnabled),
+              !irisNetwork.analyticsKey.isEmpty else { return nil }
+        return AnalyticsConfiguration(host: host.absoluteString, apiKey: irisNetwork.analyticsKey)
+    }
+    
     /// The URL to open with more information about analytics terms. When this is `nil` the "Learn more" link will be hidden.
-    private(set) var analyticsTermsURL: URL? = "https://element.io/cookie-policy"
+    private(set) var analyticsTermsURL: URL? = "https://hermes.irisr.art/cookie-policy"
     /// Whether or not there the app is able ask for user consent to enable analytics or sentry reporting.
     var canPromptForAnalytics: Bool {
         analyticsConfiguration != nil || bugReportSentryURL != nil
-    }
-    
-    private static func makeAnalyticsConfiguration() -> AnalyticsConfiguration? {
-        guard let host = Secrets.postHogHost, let apiKey = Secrets.postHogAPIKey else { return nil }
-        return AnalyticsConfiguration(host: host, apiKey: apiKey)
     }
     
     /// Whether the user has opted in to send analytics.
@@ -378,13 +387,22 @@ final nonisolated class AppSettings: @unchecked Sendable {
     let elementCallBaseURL: URL = EmbeddedElementCall.appURL!
     #endif
     
-    // These are publicly availble on https://call.element.io so we don't neeed to treat them as secrets
-    let elementCallPosthogAPIHost = "https://posthog-element-call.element.io"
-    let elementCallPosthogAPIKey = "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU"
-    let elementCallPosthogSentryDSN = "https://3bd2f95ba5554d4497da7153b552ffb5@sentry.tools.element.io/41"
+    var elementCallPosthogAPIHost: String {
+        irisNetwork.analyticsHost
+    }
     
-    @UserPreference
-    var elementCallBaseURLOverride: URL?
+    var elementCallPosthogAPIKey: String {
+        irisNetwork.analyticsKey
+    }
+    
+    var elementCallPosthogSentryDSN: String {
+        irisNetwork.reportsEnabled ? irisNetwork.sentryDSN : ""
+    }
+    
+    var elementCallBaseURLOverride: URL? {
+        get { irisNetwork.endpoint(irisNetwork.callURL, enabled: irisNetwork.callsEnabled) }
+        set { var value = irisNetwork; value.callURL = newValue?.absoluteString ?? ""; irisNetwork = value }
+    }
     
     // MARK: - Users
     
@@ -394,13 +412,11 @@ final nonisolated class AppSettings: @unchecked Sendable {
     // MARK: - Maps
     
     /// The locally-bundled MapTiler configuration.
-    static let bundledMapTilerConfiguration = MapTilerConfiguration(baseURL: "https://api.maptiler.com/maps",
-                                                                    apiKey: Secrets.mapLibreAPIKey,
-                                                                    lightStyleID: "9bc819c8-e627-474a-a348-ec144fe3d810",
-                                                                    darkStyleID: "dea61faf-292b-4774-9660-58fcef89a7f3")
-    
-    /// The MapTiler configuration used to build map URLs, which defaults to the bundled one.
-    private(set) var mapTilerConfiguration = RemotePreference(AppSettings.bundledMapTilerConfiguration)
+    static let bundledMapTilerConfiguration = MapTilerConfiguration(baseURL: "https://hermes.irisr.art",
+                                                                    apiKey: nil,
+                                                                    lightStyleID: "basic-v2",
+                                                                    darkStyleID: "basic-v2-dark")
+    private(set) var mapTilerConfiguration = RemotePreference(AppSettings.bundledMapTilerConfiguration, allowsRemoteConfiguration: false)
     
     // MARK: - Presence
     
@@ -461,8 +477,34 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: AppBuildType.current != .release)
     var developerOptionsEnabled: Bool
     
+    var allowSystemSuggestions: Bool {
+        irisNetwork.systemSuggestionsEnabled
+    }
+    
+    @UserPreference
+    var irisPushToken: String?
+    
+    @UserPreference(defaultValue: IrisNetworkConfiguration())
+    var irisNetwork: IrisNetworkConfiguration
+    
+    func applyIrisNetwork() {
+        let value = irisNetwork
+        bugReportRageshakeURL.setLocalValue(value.endpoint(value.rageshakeURL, enabled: value.reportsEnabled).map(RageshakeConfiguration.url) ?? .disabled)
+        contentScannerURL.setLocalValue(value.endpoint(value.scannerURL, enabled: value.scannerEnabled))
+        let mapURL = value.endpoint(value.mapBaseURL, enabled: value.mapsEnabled)
+        mapTilerConfiguration.setLocalValue(MapTilerConfiguration(baseURL: mapURL ?? Self.bundledMapTilerConfiguration.baseURL,
+                                                                  apiKey: mapURL == nil ? nil : value.mapAPIKey,
+                                                                  lightStyleID: value.mapLightStyle,
+                                                                  darkStyleID: value.mapDarkStyle))
+        linkPreviewsEnabled = value.linkPreviewsEnabled
+        if !value.pushEnabled {
+            enableNotifications = false
+        }
+    }
+    
     init(store: UserDefaultsProtocol) {
         self.store = store
+        applyIrisNetwork()
     }
     
     static func volatile() -> AppSettings {

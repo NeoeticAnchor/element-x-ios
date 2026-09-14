@@ -13,7 +13,15 @@ import Sentry
 import UIKit
 
 class BugReportService: NSObject, BugReportServiceProtocol {
-    private var rageshakeURL: RageshakeConfiguration
+    private var activeUpload: URLSessionTask?
+    private var rageshakeURL: RageshakeConfiguration {
+        didSet {
+            if rageshakeURL != oldValue {
+                activeUpload?.cancel()
+            }
+        }
+    }
+    
     private let applicationID: String
     private let sdkGitSHA: String
     private let session: URLSession
@@ -52,7 +60,7 @@ class BugReportService: NSObject, BugReportServiceProtocol {
     func submitBugReport(_ bugReport: BugReport,
                          progressListener: CurrentValueSubject<Double, Never>) async -> Result<SubmitBugReportResponse, BugReportServiceError> {
         guard case let .url(rageshakeURL) = rageshakeURL else {
-            fatalError("No bug report URL set, the screen should not be shown in this case.")
+            return .failure(.uploadFailure(URLError(.cancelled)))
         }
         
         var bugReport = appHooks.bugReportHook.update(bugReport)
@@ -292,8 +300,11 @@ nonisolated extension BugReportService: URLSessionTaskDelegate {
     /// where the service lives.
     func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
         Task { @MainActor [weak self] in
+            guard let self else { task.cancel(); return }
+            guard case let .url(url) = self.rageshakeURL, task.originalRequest?.url == url else { task.cancel(); return }
+            self.activeUpload = task
             for await value in task.progress.publisher(for: \.fractionCompleted).buffer(size: 1, prefetch: .byRequest, whenFull: .dropOldest).values {
-                self?.progressSubject.send(value)
+                self.progressSubject.send(value)
             }
         }
     }

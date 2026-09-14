@@ -13,3 +13,33 @@
 "soft_logout_signin_notice" = "Your homeserver (%1$s) admin has signed you out of your account %2$s (%3$s).";
 "soft_logout_signin_title" = "Sign in";
 "untranslated" = "Untranslated";
+
+"screen_iris_title" = "Iris network privacy";
+"screen_iris_disable_all" = "Disable all optional connections";
+"screen_iris_analytics" = "Usage analytics";
+"screen_iris_reports" = "Crash and bug reports";
+"screen_iris_maps" = "Self-hosted maps";
+"screen_iris_calls" = "Self-hosted calls";
+"screen_iris_scanner" = "Content scanner";
+"screen_iris_push" = "Apple push notifications";
+"screen_iris_links" = "Open external links and map apps";
+"screen_iris_previews" = "Fetch link previews";
+"screen_iris_endpoints" = "Custom service endpoints";
+"screen_iris_analytics_host" = "PostHog HTTPS endpoint";
+"screen_iris_analytics_key" = "PostHog project key";
+"screen_iris_rageshake" = "Rageshake submission URL";
+"screen_iris_sentry" = "Self-hosted Sentry DSN";
+"screen_iris_map_base" = "Map server base URL";
+"screen_iris_map_key" = "Map key (empty for a keyless server)";
+"screen_iris_map_light" = "Light map style ID";
+"screen_iris_map_dark" = "Dark map style ID";
+"screen_iris_call_url" = "Element Call URL";
+"screen_iris_scanner_url" = "Content scanner URL";
+"screen_iris_push_url" = "Sygnal base URL";
+"screen_iris_invalid_endpoints" = "Configure valid HTTPS endpoints before enabling services.";
+"screen_iris_saved" = "Network privacy settings saved.";
+"screen_iris_description" = "Optional services are off by default. Only enable endpoints you control. Push still uses Apple APNs and also requires enabling notifications. Changing these settings ends active calls. Link previews contact the linked website.";
+
+"screen_iris_calls_disabled" = "Configure and enable your call server in Advanced settings first.";
+
+"screen_iris_suggestions" = "Share interactions with Siri and system suggestions";

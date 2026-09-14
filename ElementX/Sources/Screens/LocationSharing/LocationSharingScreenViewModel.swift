@@ -58,6 +58,10 @@ class LocationSharingScreenViewModel: LocationSharingScreenViewModelType, Locati
         updateUserProfiles(members: roomProxy.membersPublisher.value)
         setupSubscriptions()
         
+        appSettings.irisNetworkPublisher.receive(on: DispatchQueue.main)
+            .sink { [weak self] network in self?.state.allowsExternalMaps = network.externalLinksEnabled }
+            .store(in: &cancellables)
+        
         if case .viewLive(_, let initialLiveLocation) = interactionMode {
             if initialLiveLocation == nil {
                 needsCenteringOnFirstLiveLocationUpdate = true

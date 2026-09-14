@@ -147,9 +147,9 @@ class LoginScreenViewModel: LoginScreenViewModelType, LoginScreenViewModelProtoc
             state.bindings.alertInfo = AlertInfo(id: .elementProAlert,
                                                  title: L10n.screenChangeServerErrorElementProRequiredTitle,
                                                  message: L10n.screenChangeServerErrorElementProRequiredMessage(serverName),
-                                                 primaryButton: .init(title: L10n.screenChangeServerErrorElementProRequiredActionIos) {
+                                                 primaryButton: appSettings.irisNetwork.externalLinksEnabled ? .init(title: L10n.screenChangeServerErrorElementProRequiredActionIos) {
                                                      UIApplication.shared.open(self.appSettings.elementProAppStoreURL)
-                                                 },
+                                                 } : .init(title: L10n.actionOk, action: nil),
                                                  secondaryButton: .init(title: L10n.actionCancel, role: .cancel, action: nil))
             // Clear out the invalid username to avoid an attempted login to matrix.org
             state.bindings.username = ""

@@ -3516,6 +3516,41 @@ nonisolated class ClientProxyMock: ClientProxyProtocol, @unchecked Sendable {
         logoutCallsCountLock.withLock { logoutUnderlyingCallsCount += 1 }
         await logoutClosure?()
     }
+    //MARK: - deletePusher
+
+    nonisolated(unsafe) var deletePusherIdentifiersThrowableError: Error?
+    private let deletePusherIdentifiersCallsCountLock = NSLock()
+    private nonisolated(unsafe) var deletePusherIdentifiersUnderlyingCallsCount = 0
+    var deletePusherIdentifiersCallsCount: Int {
+        get { deletePusherIdentifiersCallsCountLock.withLock { deletePusherIdentifiersUnderlyingCallsCount } }
+        set { deletePusherIdentifiersCallsCountLock.withLock { deletePusherIdentifiersUnderlyingCallsCount = newValue } }
+    }
+    var deletePusherIdentifiersCalled: Bool {
+        return deletePusherIdentifiersCallsCount > 0
+    }
+    private let deletePusherIdentifiersReceivedIdentifiersLock = NSLock()
+    private nonisolated(unsafe) var deletePusherIdentifiersUnderlyingReceivedIdentifiers: PusherIdentifiers?
+    var deletePusherIdentifiersReceivedIdentifiers: PusherIdentifiers? {
+        get { deletePusherIdentifiersReceivedIdentifiersLock.withLock { deletePusherIdentifiersUnderlyingReceivedIdentifiers } }
+        set { deletePusherIdentifiersReceivedIdentifiersLock.withLock { deletePusherIdentifiersUnderlyingReceivedIdentifiers = newValue } }
+    }
+    private let deletePusherIdentifiersReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var deletePusherIdentifiersUnderlyingReceivedInvocations: [PusherIdentifiers] = []
+    var deletePusherIdentifiersReceivedInvocations: [PusherIdentifiers] {
+        get { deletePusherIdentifiersReceivedInvocationsLock.withLock { deletePusherIdentifiersUnderlyingReceivedInvocations } }
+        set { deletePusherIdentifiersReceivedInvocationsLock.withLock { deletePusherIdentifiersUnderlyingReceivedInvocations = newValue } }
+    }
+    nonisolated(unsafe) var deletePusherIdentifiersClosure: ((PusherIdentifiers) async throws -> Void)?
+
+    @concurrent func deletePusher(identifiers: PusherIdentifiers) async throws {
+        if let error = deletePusherIdentifiersThrowableError {
+            throw error
+        }
+        deletePusherIdentifiersCallsCountLock.withLock { deletePusherIdentifiersUnderlyingCallsCount += 1 }
+        deletePusherIdentifiersReceivedIdentifiers = identifiers
+        deletePusherIdentifiersReceivedInvocationsLock.withLock { deletePusherIdentifiersUnderlyingReceivedInvocations.append(identifiers) }
+        try await deletePusherIdentifiersClosure?(identifiers)
+    }
     //MARK: - setPusher
 
     nonisolated(unsafe) var setPusherWithThrowableError: Error?

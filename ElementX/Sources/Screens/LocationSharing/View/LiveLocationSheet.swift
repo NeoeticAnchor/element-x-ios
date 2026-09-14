@@ -40,7 +40,7 @@ struct LiveLocationSheet: View {
             }
         }
         .popover(item: $context.sharedAnnotation) { annotation in
-            LocationShareSheet(annotation: annotation)
+            LocationShareSheet(annotation: annotation, allowsExternalMaps: context.viewState.allowsExternalMaps)
         }
     }
     

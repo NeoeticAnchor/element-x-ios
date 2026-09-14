@@ -12,6 +12,60 @@ import Foundation
 internal nonisolated enum UntranslatedL10n {
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
+  /// Usage analytics
+  internal static var screenIrisAnalytics: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_analytics") }
+  /// PostHog HTTPS endpoint
+  internal static var screenIrisAnalyticsHost: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_analytics_host") }
+  /// PostHog project key
+  internal static var screenIrisAnalyticsKey: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_analytics_key") }
+  /// Element Call URL
+  internal static var screenIrisCallUrl: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_call_url") }
+  /// Self-hosted calls
+  internal static var screenIrisCalls: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_calls") }
+  /// Configure and enable your call server in Advanced settings first.
+  internal static var screenIrisCallsDisabled: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_calls_disabled") }
+  /// Optional services are off by default. Only enable endpoints you control. Push still uses Apple APNs and also requires enabling notifications. Changing these settings ends active calls. Link previews contact the linked website.
+  internal static var screenIrisDescription: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_description") }
+  /// Disable all optional connections
+  internal static var screenIrisDisableAll: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_disable_all") }
+  /// Custom service endpoints
+  internal static var screenIrisEndpoints: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_endpoints") }
+  /// Configure valid HTTPS endpoints before enabling services.
+  internal static var screenIrisInvalidEndpoints: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_invalid_endpoints") }
+  /// Open external links and map apps
+  internal static var screenIrisLinks: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_links") }
+  /// Map server base URL
+  internal static var screenIrisMapBase: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_map_base") }
+  /// Dark map style ID
+  internal static var screenIrisMapDark: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_map_dark") }
+  /// Map key (empty for a keyless server)
+  internal static var screenIrisMapKey: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_map_key") }
+  /// Light map style ID
+  internal static var screenIrisMapLight: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_map_light") }
+  /// Self-hosted maps
+  internal static var screenIrisMaps: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_maps") }
+  /// Fetch link previews
+  internal static var screenIrisPreviews: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_previews") }
+  /// Apple push notifications
+  internal static var screenIrisPush: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_push") }
+  /// Sygnal base URL
+  internal static var screenIrisPushUrl: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_push_url") }
+  /// Rageshake submission URL
+  internal static var screenIrisRageshake: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_rageshake") }
+  /// Crash and bug reports
+  internal static var screenIrisReports: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_reports") }
+  /// Network privacy settings saved.
+  internal static var screenIrisSaved: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_saved") }
+  /// Content scanner
+  internal static var screenIrisScanner: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_scanner") }
+  /// Content scanner URL
+  internal static var screenIrisScannerUrl: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_scanner_url") }
+  /// Self-hosted Sentry DSN
+  internal static var screenIrisSentry: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_sentry") }
+  /// Share interactions with Siri and system suggestions
+  internal static var screenIrisSuggestions: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_suggestions") }
+  /// Iris network privacy
+  internal static var screenIrisTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_iris_title") }
   /// Search for chats and messages
   internal static var screenSearchEmptyStateMessage: String { return UntranslatedL10n.tr("Untranslated", "screen_search_empty_state_message") }
   /// Start searching...

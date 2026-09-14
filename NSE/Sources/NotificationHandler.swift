@@ -39,7 +39,8 @@ nonisolated class NotificationHandler {
         
         notificationContentBuilder = NotificationContentBuilder(messageEventStringBuilder: eventStringBuilder,
                                                                 notificationSoundName: settings.notificationSoundName,
-                                                                userSession: userSession)
+                                                                userSession: userSession,
+                                                                systemSuggestionsEnabled: settings.allowSystemSuggestions)
     }
     
     func processEvent(_ eventID: String, roomID: String) async {

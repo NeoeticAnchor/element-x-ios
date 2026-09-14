@@ -109,7 +109,7 @@ struct Application: App {
                 return .handled
             }
             
-            return .systemAction
+            return appCoordinator.allowsExternalURL(url) ? .systemAction : .discarded
         }
     }
     
@@ -129,6 +129,7 @@ struct Application: App {
     /// https://github.com/element-hq/element-x-ios/issues/1824
     /// Avoid opening universal links in other app variants and infinite loops between them
     private func openURLInSystemBrowser(_ originalURL: URL) {
+        guard appCoordinator.allowsExternalURL(originalURL) else { return }
         guard var urlComponents = URLComponents(url: originalURL, resolvingAgainstBaseURL: true) else {
             openURL(originalURL)
             return

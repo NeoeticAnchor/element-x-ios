@@ -474,6 +474,11 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     
     private var callScreenPictureInPictureController: AVPictureInPictureController?
     private func presentCallScreen(configuration: ElementCallConfiguration) {
+        guard flowParameters.appSettings.elementCallBaseURLOverride != nil,
+              flowParameters.appSettings.irisNetwork.callsEnabled else {
+            flowParameters.userIndicatorController.submitIndicator(.init(title: UntranslatedL10n.screenIrisCallsDisabled))
+            return
+        }
         guard flowParameters.ongoingCallRoomIDPublisher.value != configuration.callRoomID else {
             MXLog.info("Returning to existing call.")
             callScreenPictureInPictureController?.stopPictureInPicture()

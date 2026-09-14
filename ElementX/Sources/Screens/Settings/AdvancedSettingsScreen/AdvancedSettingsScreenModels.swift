@@ -36,10 +36,12 @@ struct AdvancedSettingsScreenViewState: BindableState {
 
 @dynamicMemberLookup
 struct AdvancedSettingsScreenViewStateBindings {
+    var irisNetwork: IrisNetworkConfiguration
     private let advancedSettings: AdvancedSettingsProtocol
     
     init(advancedSettings: AdvancedSettingsProtocol) {
         self.advancedSettings = advancedSettings
+        irisNetwork = advancedSettings.irisNetwork
     }
     
     subscript<Setting>(dynamicMember keyPath: ReferenceWritableKeyPath<AdvancedSettingsProtocol, Setting>) -> Setting {
@@ -49,12 +51,16 @@ struct AdvancedSettingsScreenViewStateBindings {
 }
 
 enum AdvancedSettingsScreenViewAction {
+    case saveIrisNetwork
+    case disableIrisNetwork
     case optimizeMediaUploadsChanged
     case updateTimelineMediaVisibility(TimelineMediaVisibility)
     case updateHideInviteAvatars(Bool)
 }
 
 protocol AdvancedSettingsProtocol: AnyObject {
+    var irisNetwork: IrisNetworkConfiguration { get set }
+    func applyIrisNetwork()
     var viewSourceEnabled: Bool { get set }
     var appAppearance: AppAppearance { get set }
     var sharePresence: Bool { get set }

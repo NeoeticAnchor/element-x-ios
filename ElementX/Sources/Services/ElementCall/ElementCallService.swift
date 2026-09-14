@@ -28,6 +28,8 @@ class ElementCallService: NSObject, ElementCallServiceProtocol, PKPushRegistryDe
         let isVoiceCall: Bool
     }
     
+    private let appSettings: AppSettings
+    private var networkSubscription: AnyCancellable?
     private let pushRegistry: PKPushRegistry
     private let callController = CXCallController()
     private let callProvider: CXProviderProtocol
@@ -67,7 +69,8 @@ class ElementCallService: NSObject, ElementCallServiceProtocol, PKPushRegistryDe
     
     private var declineListenerHandle: TaskHandle?
     
-    init(callProvider: CXProviderProtocol? = nil, timeProvider: TimeProvider? = nil) {
+    init(callProvider: CXProviderProtocol? = nil, timeProvider: TimeProvider? = nil, appSettings: AppSettings = .volatile()) {
+        self.appSettings = appSettings
         pushRegistry = PKPushRegistry(queue: nil)
         
         self.timeProvider = timeProvider ?? TimeProvider(clock: ContinuousClock(), now: Date.init)
@@ -92,7 +95,13 @@ class ElementCallService: NSObject, ElementCallServiceProtocol, PKPushRegistryDe
         super.init()
         
         pushRegistry.delegate = self
-        pushRegistry.desiredPushTypes = [.voIP]
+        networkSubscription = appSettings.irisNetworkPublisher.receive(on: DispatchQueue.main).sink { [weak self] network in
+            guard let self else { return }
+            self.pushRegistry.desiredPushTypes = network.callsEnabled && network.pushEnabled ? [.voIP] : []
+            if !network.callsEnabled {
+                self.tearDownCallSession()
+            }
+        }
         
         self.callProvider.setDelegate(self, queue: nil)
     }

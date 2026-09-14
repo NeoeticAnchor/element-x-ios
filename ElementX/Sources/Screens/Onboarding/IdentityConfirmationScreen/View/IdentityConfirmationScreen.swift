@@ -10,6 +10,7 @@ import Compound
 import SwiftUI
 
 struct IdentityConfirmationScreen: View {
+    @Environment(\.openURL) private var openURL
     @Bindable var context: IdentityConfirmationScreenViewModel.Context
     
     var shouldShowSkipButton: Bool {
@@ -54,7 +55,7 @@ struct IdentityConfirmationScreen: View {
                 .foregroundColor(.compound.textSecondary)
             
             Button(L10n.actionLearnMore) {
-                UIApplication.shared.open(context.viewState.learnMoreURL)
+                openURL(context.viewState.learnMoreURL)
             }
             .buttonStyle(.compound(.tertiary, size: .small))
             .padding(.top, 16)

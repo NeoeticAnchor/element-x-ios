@@ -57,15 +57,28 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
             }
             .store(in: &cancellables)
         
+        appSettings.irisNetworkPublisher.dropFirst().receive(on: DispatchQueue.main)
+            .sink { [weak self] network in
+                guard let self else { return }
+                if !network.pushEnabled {
+                    self.delegate?.unregisterForRemoteNotifications()
+                    Task { await self.removePusherIfDisabled() }
+                } else if self.appSettings.enableNotifications {
+                    self.requestAuthorization()
+                }
+            }
+            .store(in: &cancellables)
+        
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .sink { [weak self] _ in
                 self?.removeReceivedWhileOfflineNotification()
+                Task { await self?.removePusherIfDisabled() }
             }
             .store(in: &cancellables)
     }
     
     func requestAuthorization() {
-        guard appSettings.enableNotifications, !userSession.isNil else { return }
+        guard appSettings.irisNetwork.pushEnabled, appSettings.enableNotifications, !userSession.isNil else { return }
         Task {
             do {
                 let permissionGranted = try await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
@@ -95,8 +108,9 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
         // for remote notifications on startup. Otherwise let the onboarding flow handle it
         Task { [weak self] in
             guard let self else { return }
+            await removePusherIfDisabled()
             
-            if await notificationCenter.authorizationStatus() == .authorized, appSettings.enableNotifications {
+            if await notificationCenter.authorizationStatus() == .authorized, appSettings.irisNetwork.pushEnabled, appSettings.enableNotifications {
                 await MainActor.run { [weak self] in
                     self?.delegate?.registerForRemoteNotifications()
                 }
@@ -179,6 +193,8 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
     }
     
     private func setPusher(with deviceToken: Data, clientProxy: ClientProxyProtocol) async -> Bool {
+        guard appSettings.enableNotifications,
+              appSettings.irisNetwork.endpoint(appSettings.irisNetwork.pushGatewayURL, enabled: appSettings.irisNetwork.pushEnabled) != nil else { return false }
         do {
             let defaultPayload = APNSPayload(aps: APSInfo(mutableContent: 1,
                                                           alert: APSAlert(locKey: "Notification",
@@ -194,12 +210,26 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
                                                         deviceDisplayName: UIDevice.current.name,
                                                         profileTag: pusherProfileTag(),
                                                         lang: Bundle.app.preferredLocalizations.first ?? "en")
+            appSettings.irisPushToken = deviceToken.base64EncodedString()
             try await clientProxy.setPusher(with: configuration)
+            appSettings.irisPushToken = deviceToken.base64EncodedString()
+            await removePusherIfDisabled()
             MXLog.info("Set pusher succeeded")
             return true
         } catch {
             MXLog.error("Set pusher failed: \(error)")
             return false
+        }
+    }
+    
+    private func removePusherIfDisabled() async {
+        guard !appSettings.irisNetwork.pushEnabled || !appSettings.enableNotifications,
+              let token = appSettings.irisPushToken, let userSession else { return }
+        do {
+            try await userSession.clientProxy.deletePusher(identifiers: .init(pushkey: token, appId: appSettings.pusherAppID))
+            appSettings.irisPushToken = nil
+        } catch {
+            MXLog.error("Pusher removal failed; retrying when the app becomes active.")
         }
     }
     
@@ -225,6 +255,7 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
             requestAuthorization()
         } else {
             delegate?.unregisterForRemoteNotifications()
+            Task { await removePusherIfDisabled() }
         }
     }
 }

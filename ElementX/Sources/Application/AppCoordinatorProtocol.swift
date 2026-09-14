@@ -9,6 +9,8 @@
 import Foundation
 
 protocol AppCoordinatorProtocol: CoordinatorProtocol {
+    func allowsExternalURL(_ url: URL) -> Bool
+    
     var windowManager: SecureWindowManagerProtocol { get }
     
     @discardableResult func handleDeepLink(_ url: URL, isExternalURL: Bool, windowType: SecondaryWindowType?) -> Bool
@@ -18,4 +20,10 @@ protocol AppCoordinatorProtocol: CoordinatorProtocol {
     func handlePotentialPhishingAttempt(url: URL, openURLAction: @escaping (URL) -> Void) -> Bool
     
     func handleUserActivity(_ userActivity: NSUserActivity)
+}
+
+extension AppCoordinatorProtocol {
+    func allowsExternalURL(_ url: URL) -> Bool {
+        false
+    }
 }

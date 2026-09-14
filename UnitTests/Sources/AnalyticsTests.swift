@@ -20,6 +20,9 @@ final class AnalyticsTests {
     
     init() {
         appSettings = AppSettings.volatile()
+        appSettings.irisNetwork = IrisNetworkConfiguration(analyticsEnabled: true,
+                                                           analyticsHost: "https://analytics.iris.example",
+                                                           analyticsKey: "test-project")
         
         analyticsClient = AnalyticsClientMock()
         analyticsClient.isRunning = false
