@@ -50,6 +50,14 @@ private struct TimelineItemAccessibilityModifier: ViewModifier {
                     }
                     Text(timelineItem.localizedSendInfo)
                 })
+        case let timelineItem as TextRoomTimelineItem where timelineItem.content.irisHTMLCard != nil:
+            // Keep the full-content button reachable independently of the message menu.
+            interactions(for: content
+                .accessibilityElement(children: isSelecting ? .combine : .contain)
+                .accessibilityLabel { _ in
+                    Text(timelineItem.sender.displayName ?? timelineItem.sender.id)
+                    Text(timelineItem.localizedSendInfo)
+                })
         case let timelineItem as EventBasedTimelineItemProtocol:
             interactions(for: content
                 .accessibilityRepresentation {

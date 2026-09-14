@@ -1,34 +1,110 @@
 // Copyright 2026 NeoeticAnchor.
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 
+import Compound
 import SwiftUI
 import WebKit
 
 struct IrisHTMLCardView: View {
     let card: IrisHTMLCard
-    @State private var height: CGFloat = 160
+    @State private var contentSize = CGSize(width: 0, height: 80)
+    @State private var viewport = CGSize(width: 300, height: 480)
+    @State private var failed = false
+    @State private var showingFullContent = false
+    
+    private var layout: IrisHTMLPreviewLayout {
+        .init(contentSize: contentSize, viewport: viewport)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if failed {
+                Text(UntranslatedL10n.irisHtmlRenderFailed)
+                Text(card.summary)
+            } else {
+                IrisHTMLWebView(document: card.document, contentSize: $contentSize, viewport: $viewport, failed: $failed)
+                    .frame(height: layout.height)
+                    .clipped()
+                    .accessibilityIdentifier("irisHTMLInlinePreview")
+                if layout.overflows {
+                    Button(UntranslatedL10n.irisHtmlViewFullContent) { showingFullContent = true }
+                        .buttonStyle(.compound(.tertiary))
+                        .frame(maxWidth: .infinity, minHeight: IrisHTMLPreviewLayout.footerHeight)
+                        .accessibilityIdentifier("irisHTMLViewFullContent")
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showingFullContent) {
+            IrisHTMLBrowser(card: card)
+        }
+        .onChange(of: card) { _, _ in
+            failed = false
+            contentSize = .init(width: 0, height: 80)
+        }
+    }
+}
+
+struct IrisHTMLPreviewLayout {
+    static let footerHeight: CGFloat = 52
+    static let messageChromeHeight: CGFloat = 60
+    let contentSize: CGSize
+    let viewport: CGSize
+    
+    // Reserve room for the full-content button, sender and timestamp.
+    var maximumHeight: CGFloat {
+        max(80, viewport.height - Self.footerHeight - Self.messageChromeHeight)
+    }
+    
+    var height: CGFloat {
+        min(maximumHeight, max(80, contentSize.height))
+    }
+    
+    var overflows: Bool {
+        contentSize.height > maximumHeight + 1 || contentSize.width > viewport.width + 1
+    }
+}
+
+private struct IrisHTMLBrowser: View {
+    @Environment(\.dismiss) private var dismiss
+    let card: IrisHTMLCard
+    @State private var contentSize = CGSize.zero
+    @State private var viewport = CGSize.zero
     @State private var failed = false
     
     var body: some View {
-        Group {
-            if failed {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(UntranslatedL10n.irisHtmlRenderFailed)
-                    Text(card.summary)
+        ElementNavigationStack {
+            Group {
+                if failed {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(UntranslatedL10n.irisHtmlRenderFailed)
+                            Text(card.summary)
+                        }
+                        .padding()
+                    }
+                } else {
+                    IrisHTMLWebView(document: card.document, allowsScrolling: true,
+                                    contentSize: $contentSize, viewport: $viewport, failed: $failed)
+                        .accessibilityIdentifier("irisHTMLBrowser")
                 }
-            } else {
-                IrisHTMLWebView(document: card.document, height: $height, failed: $failed)
-                    .frame(height: height)
+            }
+            .navigationTitle(UntranslatedL10n.irisHtmlFullContent)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L10n.actionDone) { dismiss() }
+                        .accessibilityIdentifier("irisHTMLBrowserClose")
+                }
             }
         }
-        .accessibilityIdentifier("irisHTMLCard")
-        .onChange(of: card) { _, _ in failed = false }
     }
 }
 
 struct IrisHTMLWebView: UIViewRepresentable {
     let document: String
-    @Binding var height: CGFloat
+    var allowsScrolling = false
+    @Binding var contentSize: CGSize
+    @Binding var viewport: CGSize
     @Binding var failed: Bool
     
     static func configuration() -> WKWebViewConfiguration {
@@ -39,59 +115,94 @@ struct IrisHTMLWebView: UIViewRepresentable {
         return configuration
     }
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator(height: $height, failed: $failed)
-    }
-    
-    func makeUIView(context: Context) -> WKWebView {
-        let configuration = Self.configuration()
-        let view = WKWebView(frame: .zero, configuration: configuration)
-        view.navigationDelegate = context.coordinator
+    static func makeWebView(allowsScrolling: Bool) -> IrisHTMLViewportWebView {
+        let view = IrisHTMLViewportWebView(frame: .zero, configuration: configuration())
         view.isOpaque = false
         view.backgroundColor = .clear
         view.scrollView.backgroundColor = .clear
+        view.scrollView.isScrollEnabled = allowsScrolling
+        view.scrollView.bounces = allowsScrolling
+        view.scrollView.showsVerticalScrollIndicator = allowsScrolling
+        view.scrollView.showsHorizontalScrollIndicator = allowsScrolling
+        // Like an image, inline HTML must pass all gestures to the surrounding timeline.
+        // This also prevents nested CSS scroll containers from intercepting touches.
+        view.isUserInteractionEnabled = allowsScrolling
         view.allowsLinkPreview = false
-        context.coordinator.observation = view.scrollView.observe(\.contentSize, options: [.new]) { _, change in
-            guard let size = change.newValue else { return }
+        return view
+    }
+    
+    static func load(_ document: String, in view: WKWebView) async {
+        await view.configuration.websiteDataStore.httpCookieStore.setCookiePolicy(.disallow)
+        guard !Task.isCancelled else { return }
+        view.loadHTMLString(document, baseURL: nil)
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(contentSize: $contentSize, viewport: $viewport, failed: $failed)
+    }
+    
+    func makeUIView(context: Context) -> IrisHTMLViewportWebView {
+        let view = Self.makeWebView(allowsScrolling: allowsScrolling)
+        let coordinator = context.coordinator
+        view.navigationDelegate = coordinator
+        view.viewportChanged = { [weak coordinator] size in
             Task { @MainActor in
-                let height = min(1800, max(80, size.height))
-                if abs(context.coordinator.height.wrappedValue - height) > 1 {
-                    context.coordinator.height.wrappedValue = height
+                guard let coordinator else { return }
+                if abs(coordinator.viewport.wrappedValue.width - size.width) > 1 {
+                    coordinator.contentSize.wrappedValue = .init(width: 0, height: 80)
                 }
+                coordinator.viewport.wrappedValue = size
+            }
+        }
+        coordinator.observation = view.scrollView.observe(\.contentSize, options: [.new]) { [weak coordinator] _, change in
+            guard let size = change.newValue, size.width.isFinite, size.height.isFinite else { return }
+            Task { @MainActor in
+                guard let coordinator, coordinator.contentSize.wrappedValue != size else { return }
+                coordinator.contentSize.wrappedValue = size
             }
         }
         return view
     }
     
-    func updateUIView(_ view: WKWebView, context: Context) {
+    func updateUIView(_ view: IrisHTMLViewportWebView, context: Context) {
         guard context.coordinator.document != document else { return }
         context.coordinator.document = document
-        view.loadHTMLString(document, baseURL: nil)
+        context.coordinator.loadTask?.cancel()
+        context.coordinator.loadTask = Task { await Self.load(document, in: view) }
     }
     
-    static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
-        view.stopLoading()
+    static func dismantleUIView(_ view: IrisHTMLViewportWebView, coordinator: Coordinator) {
+        coordinator.loadTask?.cancel()
         view.navigationDelegate = nil
+        view.stopLoading()
+        view.viewportChanged = nil
         coordinator.observation?.invalidate()
     }
     
     final class Coordinator: NSObject, WKNavigationDelegate {
         var document: String?
         var observation: NSKeyValueObservation?
-        let height: Binding<CGFloat>
+        var loadTask: Task<Void, Never>?
+        let contentSize: Binding<CGSize>
+        let viewport: Binding<CGSize>
         let failed: Binding<Bool>
         
-        init(height: Binding<CGFloat>, failed: Binding<Bool>) {
-            self.height = height
+        init(contentSize: Binding<CGSize>, viewport: Binding<CGSize>, failed: Binding<Bool>) {
+            self.contentSize = contentSize
+            self.viewport = viewport
             self.failed = failed
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            failed.wrappedValue = true
+            if (error as NSError).code != NSURLErrorCancelled {
+                failed.wrappedValue = true
+            }
         }
         
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-            failed.wrappedValue = true
+            if (error as NSError).code != NSURLErrorCancelled {
+                failed.wrappedValue = true
+            }
         }
         
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
@@ -99,8 +210,33 @@ struct IrisHTMLWebView: UIViewRepresentable {
         }
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-            // Only the locally supplied document can navigate. Static cards never open URLs.
             navigationAction.navigationType == .other && navigationAction.request.url?.absoluteString == "about:blank" ? .allow : .cancel
         }
+    }
+}
+
+final class IrisHTMLViewportWebView: WKWebView {
+    var viewportChanged: ((CGSize) -> Void)?
+    private var lastViewport = CGSize.zero
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard let window, bounds.width > 0 else { return }
+        var availableHeight = window.safeAreaLayoutGuide.layoutFrame.height
+        var ancestor = superview
+        while let view = ancestor {
+            if let scrollView = view as? UIScrollView {
+                let visibleHeight = scrollView.bounds.height - scrollView.adjustedContentInset.top - scrollView.adjustedContentInset.bottom
+                if visibleHeight > 80 {
+                    availableHeight = min(availableHeight, visibleHeight)
+                }
+                break
+            }
+            ancestor = view.superview
+        }
+        let size = CGSize(width: bounds.width, height: max(80, availableHeight))
+        guard size != lastViewport else { return }
+        lastViewport = size
+        viewportChanged?(size)
     }
 }

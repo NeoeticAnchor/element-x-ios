@@ -34,6 +34,36 @@ final nonisolated class IrisHTMLWebViewTests: XCTestCase {
     }
     
     @MainActor
+    func testInlineDisablesAllInteractionWhileBrowserCanScroll() {
+        let inline = IrisHTMLWebView.makeWebView(allowsScrolling: false)
+        XCTAssertFalse(inline.isUserInteractionEnabled)
+        XCTAssertFalse(inline.scrollView.isScrollEnabled)
+        XCTAssertFalse(inline.scrollView.bounces)
+        let browser = IrisHTMLWebView.makeWebView(allowsScrolling: true)
+        XCTAssertTrue(browser.isUserInteractionEnabled)
+        XCTAssertTrue(browser.scrollView.isScrollEnabled)
+        XCTAssertFalse(inline.configuration.websiteDataStore === browser.configuration.websiteDataStore)
+    }
+    
+    @MainActor
+    func testBrowserRejectsCookiesBeforeLoadingAndUsesAnEmptyStore() async throws {
+        let browser = IrisHTMLWebView.makeWebView(allowsScrolling: true)
+        let loaded = expectation(description: "Cookie-free document loaded")
+        let delegate = LoadDelegate(loaded: loaded)
+        browser.navigationDelegate = delegate
+        let card = try XCTUnwrap(IrisHTMLCard.prepare("<p>Private</p>"))
+        await IrisHTMLWebView.load(card.document, in: browser)
+        await fulfillment(of: [loaded], timeout: 15)
+        let store = browser.configuration.websiteDataStore.httpCookieStore
+        let policy = await store.cookiePolicy
+        let cookies = await store.allCookies()
+        XCTAssertEqual(policy, .disallow)
+        XCTAssertTrue(cookies.isEmpty)
+        XCTAssertFalse(browser.configuration.websiteDataStore.isPersistent)
+        browser.stopLoading()
+    }
+    
+    @MainActor
     private final class LoadDelegate: NSObject, WKNavigationDelegate {
         let loaded: XCTestExpectation
         init(loaded: XCTestExpectation) {

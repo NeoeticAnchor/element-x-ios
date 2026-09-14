@@ -17,8 +17,12 @@ fetched from a third party or from Iris.
 
 The source and sanitised fragment are limited to 16,000 UTF-8 bytes; encoded
 extension JSON is limited to 32,000 bytes to leave room for the ordinary message
-body and Matrix encryption overhead. Long cards scroll inside the bubble after
-reaching 1,800 points. Invalid/unknown card payloads retain the standard message
+body and Matrix encryption overhead. Inline cards grow with their content up to the current visible viewport, with
+space reserved for the sender, timestamp and a **View full content** button. They do not
+scroll, select text, or intercept touches, including inside CSS scroll containers.
+Vertical or horizontal overflow shows the button below the preview. It opens a
+full-screen internal reader where the complete document can scroll; Done returns
+to the same chat. Window size and rotation update the preview limit. Invalid/unknown card payloads retain the standard message
 body. A WebKit rendering failure explicitly shows an error and the message summary.
 
 ## Wire format
@@ -49,7 +53,10 @@ summary. Reply quotations remain text summaries.
 
 ## Containment
 
-The renderer is a dedicated nonpersistent WKWebView. Page JavaScript is disabled;
+The preview and full-content reader each use a separate nonpersistent WKWebView.
+Both set the cookie policy to `disallow` before loading, and do not share a website
+data store or Safari cookies. Closing the reader discards its view and temporary
+store. Page JavaScript is disabled;
 there are no script message bridges or injected scripts. A fixed CSP blocks
 connections, frames, fonts, scripts, external styles and external images. Only
 inline CSS and embedded image data are permitted. Navigation is limited to the
@@ -65,9 +72,15 @@ validation tasks.
 
 ![Static HTML table inside an Iris message bubble](images/html-card.png)
 
-Validation environment: Xcode 26.6 / iOS 26.5 simulator. The selected unit and
-WebKit containment suites pass (93 tests), including the unchanged English
-message assertions with an explicit locale fixture. SwiftFormat and SwiftLint
-pass for the changed sources.
-The inline-room-card and composer-preview UI regression also passes on the final
-build (1 test).
+Validation environment: Xcode 26.6 / iOS 26.5 simulator. Focused tests cover
+preview limits and both overflow directions, inline gesture policy, separate
+nonpersistent browser stores, cookie rejection before loading, and script/resource
+containment. UI tests cover short cards, the composer preview, long reports,
+rotation, full-content scrolling and returning to the chat.
+
+The preview/reader update passes 10 focused unit/WebKit tests and 2 UI tests,
+including orientation changes. SwiftFormat and SwiftLint pass for the changes.
+
+![One-screen preview with a full-content button](images/html-card-one-screen.png)
+
+![Full-content reader with a separate cookie-free store](images/html-card-full-reader.png)

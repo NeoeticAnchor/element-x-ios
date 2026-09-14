@@ -7,6 +7,20 @@ import SwiftSoup
 import Testing
 
 struct IrisHTMLCardTests {
+    @Test func previewFitsViewportAndDetectsBothOverflowDirections() {
+        let viewport = CGSize(width: 300, height: 700)
+        let short = IrisHTMLPreviewLayout(contentSize: .init(width: 300, height: 120), viewport: viewport)
+        #expect(short.height == 120)
+        #expect(!short.overflows)
+        let tall = IrisHTMLPreviewLayout(contentSize: .init(width: 300, height: 3000), viewport: viewport)
+        #expect(tall.height + IrisHTMLPreviewLayout.footerHeight + IrisHTMLPreviewLayout.messageChromeHeight <= viewport.height)
+        #expect(tall.overflows)
+        let wide = IrisHTMLPreviewLayout(contentSize: .init(width: 900, height: 120), viewport: viewport)
+        #expect(wide.overflows)
+        let landscape = IrisHTMLPreviewLayout(contentSize: tall.contentSize, viewport: .init(width: 600, height: 320))
+        #expect(landscape.height < tall.height)
+    }
+    
     @Test func preservesStaticLayoutAndBuildsReadableFallback() throws {
         let card = try #require(IrisHTMLCard.prepare("<style>td{color:red}</style><h2>Report</h2><table><tr><td>Ready</td></tr></table>"))
         #expect(card.html.contains("<table>"))

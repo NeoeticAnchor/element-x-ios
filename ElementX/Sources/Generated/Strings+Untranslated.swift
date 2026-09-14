@@ -14,6 +14,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static var irisHtmlCard: String { return UntranslatedL10n.tr("Untranslated", "iris_html_card") }
   /// Paste static HTML, then preview before sending. Up to 16 KB. CSS and embedded PNG, JPEG or WebP images are supported. Scripts, forms, external images and links are disabled.
   internal static var irisHtmlDescription: String { return UntranslatedL10n.tr("Untranslated", "iris_html_description") }
+  /// Full content
+  internal static var irisHtmlFullContent: String { return UntranslatedL10n.tr("Untranslated", "iris_html_full_content") }
   /// Enter visible HTML content smaller than 16 KB.
   internal static var irisHtmlInvalid: String { return UntranslatedL10n.tr("Untranslated", "iris_html_invalid") }
   /// Preview card
@@ -22,6 +24,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static var irisHtmlRenderFailed: String { return UntranslatedL10n.tr("Untranslated", "iris_html_render_failed") }
   /// HTML source
   internal static var irisHtmlSource: String { return UntranslatedL10n.tr("Untranslated", "iris_html_source") }
+  /// View full content
+  internal static var irisHtmlViewFullContent: String { return UntranslatedL10n.tr("Untranslated", "iris_html_view_full_content") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
   /// Usage analytics

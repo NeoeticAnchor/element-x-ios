@@ -51,3 +51,6 @@
 "iris_html_invalid" = "Enter visible HTML content smaller than 16 KB.";
 
 "iris_html_render_failed" = "HTML card could not be displayed. Message summary:";
+
+"iris_html_view_full_content" = "View full content";
+"iris_html_full_content" = "Full content";
