@@ -7,6 +7,8 @@ import WebKit
 
 struct IrisHTMLCardView: View {
     let card: IrisHTMLCard
+    var collapsed: Binding<Bool>?
+    @State private var locallyCollapsed = false
     @State private var contentSize = CGSize(width: 0, height: 80)
     @State private var viewport = CGSize(width: 300, height: 480)
     @State private var failed = false
@@ -16,9 +18,20 @@ struct IrisHTMLCardView: View {
         .init(contentSize: contentSize, viewport: viewport)
     }
     
+    private var isCollapsed: Binding<Bool> {
+        collapsed ?? $locallyCollapsed
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if failed {
+            if isCollapsed.wrappedValue {
+                Text(card.summary)
+                    .font(.compound.bodyMD)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .accessibilityIdentifier("irisHTMLSummary")
+            } else if failed {
                 Text(UntranslatedL10n.irisHtmlRenderFailed)
                 Text(card.summary)
             } else {
@@ -26,14 +39,22 @@ struct IrisHTMLCardView: View {
                     .frame(height: layout.height)
                     .clipped()
                     .accessibilityIdentifier("irisHTMLInlinePreview")
-                if layout.overflows {
+            }
+            HStack(spacing: 8) {
+                Button(isCollapsed.wrappedValue ? UntranslatedL10n.irisHtmlExpand : UntranslatedL10n.irisHtmlCollapse) {
+                    isCollapsed.wrappedValue.toggle()
+                }
+                .accessibilityIdentifier("irisHTMLToggleCollapse")
+                Spacer(minLength: 0)
+                if isCollapsed.wrappedValue || layout.overflows {
                     Button(UntranslatedL10n.irisHtmlViewFullContent) { showingFullContent = true }
-                        .buttonStyle(.compound(.tertiary))
-                        .frame(maxWidth: .infinity, minHeight: IrisHTMLPreviewLayout.footerHeight)
                         .accessibilityIdentifier("irisHTMLViewFullContent")
                 }
             }
+            .buttonStyle(.compound(.tertiary, size: .small))
+            .frame(minHeight: IrisHTMLPreviewLayout.footerHeight)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .fullScreenCover(isPresented: $showingFullContent) {
             IrisHTMLBrowser(card: card)
         }

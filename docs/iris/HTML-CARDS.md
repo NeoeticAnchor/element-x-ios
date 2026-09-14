@@ -84,3 +84,19 @@ including orientation changes. SwiftFormat and SwiftLint pass for the changes.
 ![One-screen preview with a full-content button](images/html-card-one-screen.png)
 
 ![Full-content reader with a separate cookie-free store](images/html-card-full-reader.png)
+
+Each card starts expanded and has a Collapse button. Collapsing replaces WebKit
+with a native summary of at most three lines, retaining the preview's 300-point
+width (or the available width on narrow layouts). Expand restores the preview;
+View full content opens the private reader directly from the summary. Returning
+from the reader preserves the collapsed state.
+
+Collapsed event IDs are held in the current timeline view model, so recycling a
+message view does not reset the choice. This is local UI state: reopening the
+room starts expanded and no preference or message edit is sent to the server.
+
+The collapse update passes 48 unit/WebKit tests and 3 UI tests, including
+summary expansion, opening the reader while collapsed, and returning to the
+collapsed message. SwiftFormat and SwiftLint pass for the changed files.
+
+![Collapsed message summary with expand and full-content actions](images/html-card-collapsed.png)

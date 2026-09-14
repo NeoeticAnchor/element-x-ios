@@ -156,6 +156,12 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     
     override func process(viewAction: TimelineViewAction) {
         switch viewAction {
+        case .setHTMLCardCollapsed(let eventID, let collapsed):
+            if collapsed {
+                state.collapsedHTMLCardEventIDs.insert(eventID)
+            } else {
+                state.collapsedHTMLCardEventIDs.remove(eventID)
+            }
         case .itemAppeared(let id):
             Task { await timelineController.processItemAppearance(id) }
         case .itemDisappeared(let id):

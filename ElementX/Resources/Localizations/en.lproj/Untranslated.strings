@@ -54,3 +54,6 @@
 
 "iris_html_view_full_content" = "View full content";
 "iris_html_full_content" = "Full content";
+
+"iris_html_collapse" = "Collapse";
+"iris_html_expand" = "Expand";

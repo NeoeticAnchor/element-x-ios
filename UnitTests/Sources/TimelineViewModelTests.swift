@@ -21,6 +21,18 @@ final class TimelineViewModelTests {
     }
     
     @Test
+    func htmlCollapseIsPerEventAndScopedToTimeline() {
+        let viewModel = makeViewModel(timelineController: TimelineControllerMock(.init()))
+        #expect(viewModel.state.collapsedHTMLCardEventIDs.isEmpty)
+        viewModel.process(viewAction: .setHTMLCardCollapsed(eventID: "$first", collapsed: true))
+        viewModel.process(viewAction: .setHTMLCardCollapsed(eventID: "$second", collapsed: true))
+        viewModel.process(viewAction: .setHTMLCardCollapsed(eventID: "$first", collapsed: false))
+        #expect(viewModel.state.collapsedHTMLCardEventIDs == ["$second"])
+        let reopened = makeViewModel(timelineController: TimelineControllerMock(.init()))
+        #expect(reopened.state.collapsedHTMLCardEventIDs.isEmpty)
+    }
+    
+    @Test
     func htmlSummaryDoesNotExecuteJoinCommand() async throws {
         let controller = TimelineControllerMock(.init())
         let viewModel = makeViewModel(timelineController: controller)

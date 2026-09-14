@@ -49,6 +49,7 @@ enum TimelineAudioPlayerAction {
 }
 
 enum TimelineViewAction {
+    case setHTMLCardCollapsed(eventID: String, collapsed: Bool)
     case itemAppeared(itemID: TimelineItemIdentifier)
     case itemDisappeared(itemID: TimelineItemIdentifier)
     
@@ -162,6 +163,8 @@ struct TimelineViewState: BindableState {
     var linkMetadataProvider: LinkMetadataProviderProtocol?
     
     var mapTilerConfiguration: MapTilerConfiguration
+    
+    var collapsedHTMLCardEventIDs: Set<String> = []
     
     var stoppedLiveLocationIDs: Set<TimelineItemIdentifier> = []
     

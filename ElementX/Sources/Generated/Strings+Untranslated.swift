@@ -12,8 +12,12 @@ import Foundation
 internal nonisolated enum UntranslatedL10n {
   /// HTML card
   internal static var irisHtmlCard: String { return UntranslatedL10n.tr("Untranslated", "iris_html_card") }
+  /// Collapse
+  internal static var irisHtmlCollapse: String { return UntranslatedL10n.tr("Untranslated", "iris_html_collapse") }
   /// Paste static HTML, then preview before sending. Up to 16 KB. CSS and embedded PNG, JPEG or WebP images are supported. Scripts, forms, external images and links are disabled.
   internal static var irisHtmlDescription: String { return UntranslatedL10n.tr("Untranslated", "iris_html_description") }
+  /// Expand
+  internal static var irisHtmlExpand: String { return UntranslatedL10n.tr("Untranslated", "iris_html_expand") }
   /// Full content
   internal static var irisHtmlFullContent: String { return UntranslatedL10n.tr("Untranslated", "iris_html_full_content") }
   /// Enter visible HTML content smaller than 16 KB.

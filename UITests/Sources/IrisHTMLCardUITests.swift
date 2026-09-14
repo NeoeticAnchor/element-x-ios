@@ -5,6 +5,35 @@ import XCTest
 
 @MainActor
 final class IrisHTMLCardUITests: XCTestCase {
+    func testCollapseSummaryAndExpand() {
+        let app = XCUIApplication()
+        app.launchEnvironment["UI_TESTS_SCREEN"] = "irisHTMLLongRoom"
+        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let toggle = app.buttons["irisHTMLToggleCollapse"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 15))
+        let previewWidth = app.webViews.firstMatch.frame.width
+        toggle.tap()
+        let summary = app.staticTexts["irisHTMLSummary"]
+        XCTAssertTrue(summary.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.webViews.firstMatch.exists)
+        XCTAssertLessThan(summary.frame.height, 150)
+        XCTAssertEqual(summary.frame.width, previewWidth, accuracy: 25)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Collapsed HTML summary"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        app.buttons["irisHTMLViewFullContent"].tap()
+        let close = app.buttons["irisHTMLBrowserClose"]
+        XCTAssertTrue(close.waitForExistence(timeout: 5))
+        close.tap()
+        XCTAssertTrue(summary.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.webViews.firstMatch.exists)
+        toggle.tap()
+        XCTAssertTrue(app.webViews.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertFalse(summary.exists)
+    }
+    
     func testLongCardOpensCookieFreeFullContent() {
         let app = XCUIApplication()
         app.launchEnvironment["UI_TESTS_SCREEN"] = "irisHTMLLongRoom"

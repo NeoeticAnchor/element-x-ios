@@ -27,7 +27,7 @@ struct TextRoomTimelineView: View, TextBasedRoomTimelineViewProtocol {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
                 if let card = timelineItem.content.irisHTMLCard {
-                    IrisHTMLCardView(card: card)
+                    IrisHTMLCardView(card: card, collapsed: htmlCardCollapsed)
                         .frame(maxWidth: TimelineMediaFrame.maxLinkPreviewWidth)
                         .padding(.bottom, 20)
                 } else if let attributedString = timelineItem.content.formattedBody {
@@ -54,6 +54,12 @@ struct TextRoomTimelineView: View, TextBasedRoomTimelineViewProtocol {
             }
         }
         .task { await fetchLinkPreviews() }
+    }
+    
+    private var htmlCardCollapsed: Binding<Bool>? {
+        guard let context, let eventID = timelineItem.id.eventID else { return nil }
+        return Binding(get: { context.viewState.collapsedHTMLCardEventIDs.contains(eventID) },
+                       set: { context.send(viewAction: .setHTMLCardCollapsed(eventID: eventID, collapsed: $0)) })
     }
     
     private func fetchLinkPreviews() async {
