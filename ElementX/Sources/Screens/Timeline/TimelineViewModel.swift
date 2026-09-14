@@ -833,7 +833,8 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                                  html: html,
                                                  intentionalMentions: intentionalMentions)
         case .default:
-            switch slashCommand(message: message) {
+            // A card summary is content, never a composer slash command.
+            switch slashCommand(message: html?.hasPrefix(IrisHTMLCard.composerPrefix) == true ? "" : message) {
             case .join:
                 await handleJoinCommand(message: message)
             case .none:

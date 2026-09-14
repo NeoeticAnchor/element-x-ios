@@ -13,6 +13,7 @@ import MatrixRustSDKMocks
 
 nonisolated struct EventTimelineItemSDKMockConfiguration {
     var eventID: String = UUID().uuidString
+    var latestJSON: String?
     var sender = ""
     var senderProfile: ProfileDetails?
     var forwarder: String?
@@ -31,6 +32,7 @@ nonisolated extension EventTimelineItem {
     init(configuration: EventTimelineItemSDKMockConfiguration) {
         let lazyProvider = LazyTimelineItemProviderSDKMock()
         lazyProvider.containsOnlyEmojisReturnValue = false
+        lazyProvider.latestJsonReturnValue = configuration.latestJSON
         lazyProvider.getShieldsStrictReturnValue = ShieldState.none
         lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: nil, latestEditJson: nil)
         self.init(isRemote: true,

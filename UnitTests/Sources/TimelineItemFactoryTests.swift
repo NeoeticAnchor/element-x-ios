@@ -13,6 +13,21 @@ import Testing
 @MainActor
 struct TimelineItemFactoryTests {
     @Test
+    func irisCardUsesRawExtensionAndDisablesTextEditing() throws {
+        let userID = "@alice:iris.example"
+        let factory = RoomTimelineItemFactory(userID: userID,
+                                              attributedStringBuilder: AttributedStringBuilder(mentionBuilder: MentionBuilder()),
+                                              stateEventStringBuilder: RoomStateEventStringBuilder(userID: userID))
+        let card = try #require(IrisHTMLCard.prepare("<h2>Report</h2><table><tr><td>Ready</td></tr></table>"))
+        let json = try "{\"content\":\(card.extraContentJSON())}"
+        let event = EventTimelineItem(configuration: .init(latestJSON: json, isOwn: true, isEditable: true, content: EventTimelineItem.mockMessage.content))
+        let proxy = EventTimelineItemProxy(item: event, uniqueID: .init("iris"))
+        let item = try #require(factory.buildTimelineItem(for: proxy, isDM: false) as? TextRoomTimelineItem)
+        #expect(item.content.irisHTMLCard == card)
+        #expect(!item.isEditable)
+    }
+    
+    @Test
     func callInvite() throws {
         let ownUserID = "@alice:matrix.org"
         let senderUserID = "@bob:matrix.org"

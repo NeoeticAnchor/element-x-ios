@@ -25,6 +25,16 @@ final class ComposerToolbarViewModelTests {
     }
     
     @Test
+    func staticHTMLCardSendContainsSummaryWithoutMentions() async throws {
+        let deferred = deferFulfillment(viewModel.actions) { action in
+            guard case let .sendMessage(plain, html, mode, mentions) = action else { return false }
+            return plain == "Report" && html?.hasPrefix(IrisHTMLCard.composerPrefix) == true && mode == .default && mentions == .empty
+        }
+        viewModel.process(viewAction: .sendHTMLCard("<h2>Report</h2><script>bad()</script>"))
+        try await deferred.fulfill()
+    }
+    
+    @Test
     func composerFocus() {
         viewModel.process(timelineAction: .setMode(mode: .edit(originalEventOrTransactionID: .eventID("mock"), type: .default)))
         #expect(viewModel.state.bindings.composerFocused)

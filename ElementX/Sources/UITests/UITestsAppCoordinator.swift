@@ -315,9 +315,15 @@ class MockScreen: Identifiable {
             let coordinator = RoomScreenCoordinator(parameters: parameters)
             navigationStackCoordinator.setRootCoordinator(coordinator)
             return navigationStackCoordinator
-        case .roomSmallTimeline:
+        case .roomSmallTimeline, .irisHTMLRoom:
             let navigationStackCoordinator = NavigationStackCoordinator()
-            let timelineController = TimelineControllerMock(.init(timelineItems: TimelineFixtures.smallChunk))
+            var items = TimelineFixtures.smallChunk
+            if id == .irisHTMLRoom, let card = IrisHTMLCard.prepare("<h2>Iris report</h2><table><tr><th>Service</th><th>Status</th></tr><tr><td>Hermes</td><td>Ready</td></tr></table>") {
+                items = [TextRoomTimelineItem(id: .randomEvent, timestamp: .mock, isOutgoing: false, isEditable: false, canBeRepliedTo: true,
+                                              sender: .init(id: "@iris:hermes.irisr.art", displayName: "Iris", avatarURL: nil),
+                                              content: .init(body: card.summary, irisHTMLCard: card))]
+            }
+            let timelineController = TimelineControllerMock(.init(timelineItems: items))
             let parameters = RoomScreenCoordinatorParameters(userSession: UserSessionMock(.init()),
                                                              roomProxy: JoinedRoomProxyMock(.init(name: "New room", avatarURL: .mockMXCAvatar)),
                                                              timelineController: timelineController,

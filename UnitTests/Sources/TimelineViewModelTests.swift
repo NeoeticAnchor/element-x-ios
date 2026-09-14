@@ -20,6 +20,19 @@ final class TimelineViewModelTests {
         cancellables.removeAll()
     }
     
+    @Test
+    func htmlSummaryDoesNotExecuteJoinCommand() async throws {
+        let controller = TimelineControllerMock(.init())
+        let viewModel = makeViewModel(timelineController: controller)
+        let sent = PassthroughSubject<String, Never>()
+        controller.sendMessageHtmlInReplyToEventIDIntentionalMentionsClosure = { message, _, _, _ in sent.send(message) }
+        let deferred = deferFulfillment(sent) { $0 == "/join #unexpected:example.com" }
+        viewModel.process(composerAction: .sendMessage(plain: "/join #unexpected:example.com",
+                                                       html: IrisHTMLCard.composerPrefix + "<p>/join #unexpected:example.com</p>",
+                                                       mode: .default, intentionalMentions: .empty))
+        try await deferred.fulfill()
+    }
+    
     // MARK: - Message Grouping
     
     @Test
@@ -539,6 +552,10 @@ final class TimelineViewModelTests {
     
     @Test
     func tapSendInfoEncryptionAuthentictyDisplaysAlert() {
+        let previousLanguages = Bundle.overrideLocalizations
+        Bundle.overrideLocalizations = ["en"]
+        defer { Bundle.overrideLocalizations = previousLanguages }
+        
         // Given a room with an event whose authenticity could not be verified
         let items = [TextRoomTimelineItem(eventID: "t1", encryptionAuthenticity: .verificationViolation(color: .red))]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
@@ -553,6 +570,10 @@ final class TimelineViewModelTests {
     
     @Test
     func tapSendInfoEncryptionForwarderDisplaysAlert() {
+        let previousLanguages = Bundle.overrideLocalizations
+        Bundle.overrideLocalizations = ["en"]
+        defer { Bundle.overrideLocalizations = previousLanguages }
+        
         // Given a room with an event whose key was forwarded
         let items = [TextRoomTimelineItem(eventID: "t1", keyForwarder: .test)]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))

@@ -39,6 +39,8 @@ enum ComposerToolbarViewModelAction {
 }
 
 enum ComposerToolbarViewAction {
+    case showHTMLComposer
+    case sendHTMLCard(String)
     case composerAppeared
     case composerDisappeared
     
@@ -142,6 +144,7 @@ struct ComposerToolbarViewState: BindableState {
 }
 
 struct ComposerToolbarViewStateBindings {
+    var showingHTMLComposer = false
     var plainComposerText: NSAttributedString = .init(string: "")
     var composerFocused = false
     var composerFormattingEnabled = false
@@ -383,5 +386,12 @@ enum ComposerMode: Equatable {
         default:
             return false
         }
+    }
+}
+
+// HTML source is message content and must never appear in action logs.
+extension ComposerToolbarViewAction: CustomStringConvertible {
+    var description: String {
+        Mirror(reflecting: self).children.first?.label ?? "ComposerToolbarViewAction"
     }
 }

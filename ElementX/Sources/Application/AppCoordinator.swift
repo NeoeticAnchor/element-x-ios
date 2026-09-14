@@ -171,21 +171,7 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
         
         registerBackgroundAppRefresh()
         
-        appSettings.irisNetworkPublisher
-            .dropFirst()
-            .receive(on: DispatchQueue.main)
-            .sink { [bugReportService, analyticsService, appSettings] _ in
-                if !appSettings.irisNetwork.systemSuggestionsEnabled {
-                    INInteraction.deleteAll { error in
-                        if error != nil {
-                            MXLog.error("Could not remove donated system interactions.")
-                        }
-                    }
-                }
-                SentrySDK.close()
-                Self.setupSentry(bugReportService: bugReportService, appSettings: appSettings, analytics: analyticsService)
-            }
-            .store(in: &cancellables)
+        observeIrisNetworkChanges()
         
         appSettings.analyticsConsentStatePublisher
             .dropFirst() // Sentry is configured during init; only reconfigure when consent state actually changes
@@ -1330,5 +1316,25 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
                     task.setTaskCompleted(success: true)
                 }
             }
+    }
+}
+
+private extension AppCoordinator {
+    func observeIrisNetworkChanges() {
+        appSettings.irisNetworkPublisher
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [bugReportService, analyticsService, appSettings] _ in
+                if !appSettings.irisNetwork.systemSuggestionsEnabled {
+                    INInteraction.deleteAll { error in
+                        if error != nil {
+                            MXLog.error("Could not remove donated system interactions.")
+                        }
+                    }
+                }
+                SentrySDK.close()
+                Self.setupSentry(bugReportService: bugReportService, appSettings: appSettings, analytics: analyticsService)
+            }
+            .store(in: &cancellables)
     }
 }

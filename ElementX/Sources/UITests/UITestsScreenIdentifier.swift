@@ -21,6 +21,7 @@ enum UITestsScreenIdentifier: String {
     case singleProviderAuthenticationFlow
     case multipleProvidersAuthenticationFlow
     case irisNetworkSettings
+    case irisHTMLRoom
     case bugReport
     case createPoll
     case encryptionSettings

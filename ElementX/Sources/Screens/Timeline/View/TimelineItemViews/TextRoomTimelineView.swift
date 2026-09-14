@@ -26,7 +26,11 @@ struct TextRoomTimelineView: View, TextBasedRoomTimelineViewProtocol {
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
-                if let attributedString = timelineItem.content.formattedBody {
+                if let card = timelineItem.content.irisHTMLCard {
+                    IrisHTMLCardView(card: card)
+                        .frame(maxWidth: TimelineMediaFrame.maxLinkPreviewWidth)
+                        .padding(.bottom, 20)
+                } else if let attributedString = timelineItem.content.formattedBody {
                     FormattedBodyText(attributedString: attributedString,
                                       trailingReservedSize: timelineItem.trailingReservedSize,
                                       boostFontSize: timelineItem.shouldBoost)
@@ -53,7 +57,7 @@ struct TextRoomTimelineView: View, TextBasedRoomTimelineViewProtocol {
     }
     
     private func fetchLinkPreviews() async {
-        guard context?.viewState.linkPreviewsEnabled ?? false else {
+        guard timelineItem.content.irisHTMLCard == nil, context?.viewState.linkPreviewsEnabled ?? false else {
             return
         }
         

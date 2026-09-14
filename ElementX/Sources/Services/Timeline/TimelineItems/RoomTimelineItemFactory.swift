@@ -198,23 +198,25 @@ nonisolated struct RoomTimelineItemFactory: RoomTimelineItemFactoryProtocol {
                                        _ messageContent: MessageContent,
                                        _ textMessageContent: TextMessageContent,
                                        _ isOutgoing: Bool) -> RoomTimelineItemProtocol {
-        TextRoomTimelineItem(id: eventItemProxy.id,
-                             timestamp: eventItemProxy.timestamp,
-                             isOutgoing: isOutgoing,
-                             isEditable: eventItemProxy.isEditable,
-                             canBeRepliedTo: eventItemProxy.canBeRepliedTo,
-                             shouldBoost: eventItemProxy.shouldBoost,
-                             sender: eventItemProxy.sender,
-                             content: buildTextTimelineItemContent(textMessageContent),
-                             properties: .init(replyDetails: buildTimelineItemReplyDetails(messageLikeContent.inReplyTo),
-                                               isThreaded: messageLikeContent.threadRoot != nil,
-                                               threadSummary: buildTimelineItemThreadSummary(messageLikeContent.threadSummary),
-                                               isEdited: messageContent.isEdited,
-                                               reactions: buildAggregatedReactions(messageLikeContent.reactions),
-                                               deliveryStatus: eventItemProxy.deliveryStatus,
-                                               orderedReadReceipts: buildOrderedReadReceipts(eventItemProxy.readReceipts),
-                                               encryptionAuthenticity: buildEncryptionAuthenticity(eventItemProxy.shieldState),
-                                               encryptionForwarder: eventItemProxy.forwarder))
+        var content = buildTextTimelineItemContent(textMessageContent)
+        content.irisHTMLCard = IrisHTMLCard.fromEventJSON(eventItemProxy.item.lazyProvider.latestJson())
+        return TextRoomTimelineItem(id: eventItemProxy.id,
+                                    timestamp: eventItemProxy.timestamp,
+                                    isOutgoing: isOutgoing,
+                                    isEditable: eventItemProxy.isEditable && content.irisHTMLCard == nil,
+                                    canBeRepliedTo: eventItemProxy.canBeRepliedTo,
+                                    shouldBoost: eventItemProxy.shouldBoost,
+                                    sender: eventItemProxy.sender,
+                                    content: content,
+                                    properties: .init(replyDetails: buildTimelineItemReplyDetails(messageLikeContent.inReplyTo),
+                                                      isThreaded: messageLikeContent.threadRoot != nil,
+                                                      threadSummary: buildTimelineItemThreadSummary(messageLikeContent.threadSummary),
+                                                      isEdited: messageContent.isEdited,
+                                                      reactions: buildAggregatedReactions(messageLikeContent.reactions),
+                                                      deliveryStatus: eventItemProxy.deliveryStatus,
+                                                      orderedReadReceipts: buildOrderedReadReceipts(eventItemProxy.readReceipts),
+                                                      encryptionAuthenticity: buildEncryptionAuthenticity(eventItemProxy.shieldState),
+                                                      encryptionForwarder: eventItemProxy.forwarder))
     }
     
     private func buildImageTimelineItem(for eventItemProxy: EventTimelineItemProxy,

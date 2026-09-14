@@ -83,6 +83,9 @@ struct ComposerToolbar: View {
         }
         .disabled(!context.viewState.canSend)
         .alert(item: $context.alertInfo)
+        .sheet(isPresented: $context.showingHTMLComposer) {
+            IrisHTMLComposerSheet { context.send(viewAction: .sendHTMLCard($0)) }
+        }
     }
     
     private var suggestionView: some View {

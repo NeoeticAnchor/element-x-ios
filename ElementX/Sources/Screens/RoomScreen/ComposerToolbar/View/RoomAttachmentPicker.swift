@@ -30,6 +30,14 @@ struct RoomAttachmentPicker: View {
     
     var menuContent: some View {
         VStack(alignment: .leading, spacing: 0.0) {
+            if context.viewState.composerMode == .default, context.viewState.sendButtonDisabled {
+                Button {
+                    context.send(viewAction: .showHTMLComposer)
+                } label: {
+                    Label(UntranslatedL10n.irisHtmlCard, icon: \.textFormatting)
+                }
+                .accessibilityIdentifier("irisHTMLCompose")
+            }
             Button {
                 context.send(viewAction: .enableTextFormatting)
             } label: {

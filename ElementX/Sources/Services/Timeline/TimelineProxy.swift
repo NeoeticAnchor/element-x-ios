@@ -444,7 +444,14 @@ final class TimelineProxy: TimelineProxyProtocol {
                 _ = try await timeline.sendReply(msg: messageContent, eventId: inReplyToEventID)
                 MXLog.info("Finished sending reply to eventID: \(inReplyToEventID)")
             } else {
-                _ = try await timeline.send(msg: messageContent)
+                if let html, html.hasPrefix(IrisHTMLCard.composerPrefix),
+                   let card = IrisHTMLCard.prepare(String(html.dropFirst(IrisHTMLCard.composerPrefix.count))) {
+                    let fallback = messageEventContentFromMarkdown(md: card.summary).withMentions(mentions: intentionalMentions.toRustMentions())
+                    _ = try await timeline.sendWithExtraContent(msg: fallback,
+                                                                extraContentJson: card.extraContentJSON())
+                } else {
+                    _ = try await timeline.send(msg: messageContent)
+                }
                 MXLog.info("Finished sending message")
             }
         } catch {

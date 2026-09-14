@@ -10,6 +10,18 @@ import Foundation
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
 internal nonisolated enum UntranslatedL10n {
+  /// HTML card
+  internal static var irisHtmlCard: String { return UntranslatedL10n.tr("Untranslated", "iris_html_card") }
+  /// Paste static HTML, then preview before sending. Up to 16 KB. CSS and embedded PNG, JPEG or WebP images are supported. Scripts, forms, external images and links are disabled.
+  internal static var irisHtmlDescription: String { return UntranslatedL10n.tr("Untranslated", "iris_html_description") }
+  /// Enter visible HTML content smaller than 16 KB.
+  internal static var irisHtmlInvalid: String { return UntranslatedL10n.tr("Untranslated", "iris_html_invalid") }
+  /// Preview card
+  internal static var irisHtmlPreview: String { return UntranslatedL10n.tr("Untranslated", "iris_html_preview") }
+  /// HTML card could not be displayed. Message summary:
+  internal static var irisHtmlRenderFailed: String { return UntranslatedL10n.tr("Untranslated", "iris_html_render_failed") }
+  /// HTML source
+  internal static var irisHtmlSource: String { return UntranslatedL10n.tr("Untranslated", "iris_html_source") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
   /// Usage analytics

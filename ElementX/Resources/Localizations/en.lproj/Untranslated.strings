@@ -43,3 +43,11 @@
 "screen_iris_calls_disabled" = "Configure and enable your call server in Advanced settings first.";
 
 "screen_iris_suggestions" = "Share interactions with Siri and system suggestions";
+
+"iris_html_card" = "HTML card";
+"iris_html_source" = "HTML source";
+"iris_html_description" = "Paste static HTML, then preview before sending. Up to 16 KB. CSS and embedded PNG, JPEG or WebP images are supported. Scripts, forms, external images and links are disabled.";
+"iris_html_preview" = "Preview card";
+"iris_html_invalid" = "Enter visible HTML content smaller than 16 KB.";
+
+"iris_html_render_failed" = "HTML card could not be displayed. Message summary:";

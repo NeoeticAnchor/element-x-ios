@@ -176,6 +176,15 @@ final class ComposerToolbarViewModel: ComposerToolbarViewModelType, ComposerTool
     
     override func process(viewAction: ComposerToolbarViewAction) {
         switch viewAction {
+        case .showHTMLComposer:
+            state.bindings.composerFocused = false
+            state.bindings.showingHTMLComposer = true
+        case .sendHTMLCard(let source):
+            guard state.canSend, state.composerMode == .default, state.sendButtonDisabled, let card = IrisHTMLCard.prepare(source) else { return }
+            actionsSubject.send(.sendMessage(plain: card.summary,
+                                             html: IrisHTMLCard.composerPrefix + card.html,
+                                             mode: .default,
+                                             intentionalMentions: .init(userIDs: [], atRoom: false)))
         case .composerAppeared:
             if !hasAppeard {
                 hasAppeard = true
