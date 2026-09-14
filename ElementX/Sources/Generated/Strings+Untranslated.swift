@@ -28,7 +28,7 @@ internal nonisolated enum UntranslatedL10n {
   internal static var irisHtmlRenderFailed: String { return UntranslatedL10n.tr("Untranslated", "iris_html_render_failed") }
   /// HTML source
   internal static var irisHtmlSource: String { return UntranslatedL10n.tr("Untranslated", "iris_html_source") }
-  /// View full content
+  /// View all
   internal static var irisHtmlViewFullContent: String { return UntranslatedL10n.tr("Untranslated", "iris_html_view_full_content") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }

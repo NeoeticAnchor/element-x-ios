@@ -18,7 +18,7 @@ fetched from a third party or from Iris.
 The source and sanitised fragment are limited to 16,000 UTF-8 bytes; encoded
 extension JSON is limited to 32,000 bytes to leave room for the ordinary message
 body and Matrix encryption overhead. Inline cards grow with their content up to the current visible viewport, with
-space reserved for the sender, timestamp and a **View full content** button. They do not
+space reserved for the sender, timestamp and a **View all** button. They do not
 scroll, select text, or intercept touches, including inside CSS scroll containers.
 Vertical or horizontal overflow shows the button below the preview. It opens a
 full-screen internal reader where the complete document can scroll; Done returns
@@ -88,7 +88,7 @@ including orientation changes. SwiftFormat and SwiftLint pass for the changes.
 Each card starts expanded and has a Collapse button. Collapsing replaces WebKit
 with a native summary of at most three lines, retaining the preview's 300-point
 width (or the available width on narrow layouts). Expand restores the preview;
-View full content opens the private reader directly from the summary. Returning
+View all opens the private reader directly from the summary. Returning
 from the reader preserves the collapsed state.
 
 Collapsed event IDs are held in the current timeline view model, so recycling a
@@ -100,3 +100,7 @@ summary expansion, opening the reader while collapsed, and returning to the
 collapsed message. SwiftFormat and SwiftLint pass for the changed files.
 
 ![Collapsed message summary with expand and full-content actions](images/html-card-collapsed.png)
+
+Card actions use secondary-colour footnote labels and small directional chevrons,
+with no filled button chrome. Each action retains a 44-point minimum hit height.
+The refined controls pass all three card UI flows, including rotation.

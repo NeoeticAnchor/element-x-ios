@@ -29,7 +29,9 @@ struct IrisHTMLCardView: View {
                     .font(.compound.bodyMD)
                     .lineLimit(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(12)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 10)
+                    .padding(.bottom, 2)
                     .accessibilityIdentifier("irisHTMLSummary")
             } else if failed {
                 Text(UntranslatedL10n.irisHtmlRenderFailed)
@@ -40,19 +42,40 @@ struct IrisHTMLCardView: View {
                     .clipped()
                     .accessibilityIdentifier("irisHTMLInlinePreview")
             }
-            HStack(spacing: 8) {
-                Button(isCollapsed.wrappedValue ? UntranslatedL10n.irisHtmlExpand : UntranslatedL10n.irisHtmlCollapse) {
+            HStack(spacing: 12) {
+                Button {
                     isCollapsed.wrappedValue.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        CompoundIcon(isCollapsed.wrappedValue ? \.chevronDown : \.chevronUp,
+                                     size: .custom(12), relativeTo: .footnote)
+                            .accessibilityHidden(true)
+                        Text(isCollapsed.wrappedValue ? UntranslatedL10n.irisHtmlExpand : UntranslatedL10n.irisHtmlCollapse)
+                    }
+                    .padding(.horizontal, 4)
+                    .frame(minHeight: IrisHTMLPreviewLayout.footerHeight)
+                    .contentShape(Rectangle())
                 }
                 .accessibilityIdentifier("irisHTMLToggleCollapse")
                 Spacer(minLength: 0)
                 if isCollapsed.wrappedValue || layout.overflows {
-                    Button(UntranslatedL10n.irisHtmlViewFullContent) { showingFullContent = true }
-                        .accessibilityIdentifier("irisHTMLViewFullContent")
+                    Button { showingFullContent = true } label: {
+                        HStack(spacing: 4) {
+                            Text(UntranslatedL10n.irisHtmlViewFullContent)
+                            CompoundIcon(\.chevronRight, size: .custom(12), relativeTo: .footnote)
+                                .accessibilityHidden(true)
+                        }
+                        .padding(.horizontal, 4)
+                        .frame(minHeight: IrisHTMLPreviewLayout.footerHeight)
+                        .contentShape(Rectangle())
+                    }
+                    .accessibilityIdentifier("irisHTMLViewFullContent")
                 }
             }
-            .buttonStyle(.compound(.tertiary, size: .small))
-            .frame(minHeight: IrisHTMLPreviewLayout.footerHeight)
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(Color.compound.textSecondary)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .fullScreenCover(isPresented: $showingFullContent) {
@@ -66,7 +89,7 @@ struct IrisHTMLCardView: View {
 }
 
 struct IrisHTMLPreviewLayout {
-    static let footerHeight: CGFloat = 52
+    static let footerHeight: CGFloat = 44
     static let messageChromeHeight: CGFloat = 60
     let contentSize: CGSize
     let viewport: CGSize
