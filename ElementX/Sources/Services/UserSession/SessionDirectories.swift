@@ -12,6 +12,10 @@ nonisolated struct SessionDirectories: Hashable, Codable {
     let dataDirectory: URL
     let cacheDirectory: URL
     
+    private enum CodingKeys: String, CodingKey {
+        case dataDirectory, cacheDirectory
+    }
+    
     var dataPath: String {
         dataDirectory.path(percentEncoded: false)
     }
@@ -74,6 +78,27 @@ nonisolated struct SessionDirectories: Hashable, Codable {
 }
 
 nonisolated extension SessionDirectories {
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        dataDirectory = try Self.relocated(values.decode(URL.self, forKey: .dataDirectory), under: .sessionsBaseDirectory)
+        cacheDirectory = try Self.relocated(values.decode(URL.self, forKey: .cacheDirectory), under: .sessionCachesBaseDirectory)
+    }
+    
+    func relocatedToCurrentContainer() -> Self {
+        .init(dataDirectory: Self.relocated(dataDirectory, under: .sessionsBaseDirectory),
+              cacheDirectory: Self.relocated(cacheDirectory, under: .sessionCachesBaseDirectory))
+    }
+    
+    // iOS can relocate the sandbox on update. Persisted absolute URLs must follow it.
+    private static func relocated(_ directory: URL, under root: URL) -> URL {
+        guard directory.isFileURL,
+              UUID(uuidString: directory.lastPathComponent) != nil,
+              directory.deletingLastPathComponent().pathComponents.suffix(4) == root.pathComponents.suffix(4) else {
+            return directory
+        }
+        return root.appending(component: directory.lastPathComponent)
+    }
+    
     /// Creates a fresh set of session directories for a new user.
     init() {
         let sessionDirectoryName = UUID().uuidString
@@ -83,7 +108,7 @@ nonisolated extension SessionDirectories {
     
     /// Creates the session directories for a user who has a single session directory stored without a separate caches directory.
     init(dataDirectory: URL) {
-        self.dataDirectory = dataDirectory
+        self.dataDirectory = Self.relocated(dataDirectory, under: .sessionsBaseDirectory)
         cacheDirectory = .sessionCachesBaseDirectory.appending(component: dataDirectory.lastPathComponent)
     }
 }

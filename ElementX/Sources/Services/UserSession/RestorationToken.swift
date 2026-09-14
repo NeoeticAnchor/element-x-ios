@@ -43,7 +43,7 @@ nonisolated extension RestorationToken: Codable {
         }
         
         self = try .init(session: session,
-                         sessionDirectories: sessionDirectories,
+                         sessionDirectories: sessionDirectories.relocatedToCurrentContainer(),
                          passphrase: container.decode(String.self, forKey: .passphrase),
                          pusherNotificationClientIdentifier: container.decodeIfPresent(String.self, forKey: .pusherNotificationClientIdentifier))
     }

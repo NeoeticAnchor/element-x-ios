@@ -65,9 +65,7 @@ class UserSessionStore: UserSessionStoreProtocol {
         case .failure(let error):
             MXLog.error("Failed restoring login with error: \(error)")
             
-            // On any restoration failure reset the token and restart
-            keychainController.removeRestorationTokenForUsername(credentials.userID)
-            credentials.restorationToken.sessionDirectories.delete()
+            // Keep the credentials and crypto store for recovery. A failed restore is not a logout.
             
             return .failure(error)
         }

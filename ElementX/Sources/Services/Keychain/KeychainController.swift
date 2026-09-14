@@ -30,6 +30,7 @@ final nonisolated class KeychainController: KeychainControllerProtocol {
     private let restorationTokenKeychain: Keychain
     /// The keychain responsible for storing all other secrets in the app (keyed by `Key`s).
     private let mainKeychain: Keychain
+    private let recoveryTokenKeychain: Keychain
     
     private enum Key: String {
         case appLockPINCode
@@ -39,6 +40,7 @@ final nonisolated class KeychainController: KeychainControllerProtocol {
     init(service: KeychainControllerService, accessGroup: String) {
         restorationTokenKeychain = Keychain(service: service.restorationTokenID, accessGroup: accessGroup)
         mainKeychain = Keychain(service: service.mainID, accessGroup: accessGroup)
+        recoveryTokenKeychain = Keychain(service: service.restorationTokenID + ".recovery", accessGroup: accessGroup)
     }
     
     // MARK: - Restoration Tokens
@@ -46,6 +48,13 @@ final nonisolated class KeychainController: KeychainControllerProtocol {
     func setRestorationToken(_ restorationToken: RestorationToken, forUsername username: String) {
         do {
             let tokenData = try JSONEncoder().encode(restorationToken)
+            if let previousData = try restorationTokenKeychain.getData(username) {
+                let previous = try? JSONDecoder().decode(RestorationToken.self, from: previousData)
+                if previous?.sessionDirectories != restorationToken.sessionDirectories {
+                    let key = username + "|" + (previous?.sessionDirectories.dataDirectory.lastPathComponent ?? UUID().uuidString)
+                    try recoveryTokenKeychain.set(previousData, key: key)
+                }
+            }
             try restorationTokenKeychain.set(tokenData, key: username)
         } catch {
             MXLog.error("Failed storing user restore token with error: \(error)")
@@ -84,6 +93,9 @@ final nonisolated class KeychainController: KeychainControllerProtocol {
         
         do {
             try restorationTokenKeychain.remove(username)
+            for key in recoveryTokenKeychain.allKeys() where key.hasPrefix(username + "|") {
+                try recoveryTokenKeychain.remove(key)
+            }
         } catch {
             MXLog.error("Failed removing restore token with error: \(error)")
         }
@@ -94,6 +106,7 @@ final nonisolated class KeychainController: KeychainControllerProtocol {
         
         do {
             try restorationTokenKeychain.removeAll()
+            try recoveryTokenKeychain.removeAll()
         } catch {
             MXLog.error("Failed removing all tokens")
         }

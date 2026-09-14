@@ -59,3 +59,23 @@ SwiftFormat lint also passes. These checks do not replace real-account network
 capture or validation of a signed device build.
 
 ![Iris network settings with optional connections disabled](images/network-settings.png)
+
+## Personal development builds and session persistence
+
+A local Personal Team build can omit unsupported notification, associated-domain
+and app-group entitlements and exclude the notification/share extensions. This is
+an installation variant, not the production entitlement configuration. Without an
+app group, session files use the app data container, which iOS can relocate when
+updating the app.
+
+Restoration tokens therefore resolve recognised UUID session paths under the
+current data/cache roots before checking the crypto database or creating the SDK
+client. A failed restoration preserves credentials and files. If another login
+replaces that session, its prior restoration token is retained in a separate
+keychain recovery service, excluded from normal login selection. Explicit logout
+or reset removes the corresponding recovery credentials too.
+
+Do not uninstall, reset encryption, or delete key backups to troubleshoot an
+update requiring login. Preserve existing data first. An old crypto database
+still needs its local store passphrase; a server key backup needs the user's
+recovery key. Finding either database alone does not prove its keys are recoverable.

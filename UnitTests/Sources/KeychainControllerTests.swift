@@ -22,6 +22,44 @@ struct KeychainControllerTests {
     }
     
     @Test
+    func storedRestorationTokenFollowsContainerMove() throws {
+        let id = UUID().uuidString
+        let old = SessionDirectories(dataDirectory: URL(filePath: "/old-container/Library/Application Support/" + InfoPlistReader.main.baseBundleIdentifier + "/Sessions/" + id),
+                                     cacheDirectory: URL(filePath: "/old-container/Library/Caches/" + InfoPlistReader.main.baseBundleIdentifier + "/Sessions/" + id))
+        let token = RestorationToken(session: .init(accessToken: "token", refreshToken: nil, userId: "@relocated:example.com",
+                                                    deviceId: "same-device", homeserverUrl: "https://example.com", oauthData: nil, slidingSyncVersion: .native),
+                                     sessionDirectories: old, passphrase: "same-store-password", pusherNotificationClientIdentifier: nil)
+        keychain.setRestorationToken(token, forUsername: token.session.userId)
+        let restored = try #require(keychain.restorationTokenForUsername(token.session.userId))
+        #expect(restored.sessionDirectories.dataDirectory == URL.sessionsBaseDirectory.appending(component: id))
+        #expect(restored.sessionDirectories.cacheDirectory == URL.sessionCachesBaseDirectory.appending(component: id))
+        #expect(restored.session == token.session)
+        #expect(restored.passphrase == token.passphrase)
+    }
+    
+    @Test
+    func replacingSessionPreservesRecoveryCredentialsUntilLogout() throws {
+        let username = "@recovery:example.com"
+        let first = RestorationToken(session: .init(accessToken: "first-token", refreshToken: nil,
+                                                    userId: username, deviceId: "old-device", homeserverUrl: "https://example.com",
+                                                    oauthData: nil, slidingSyncVersion: .native),
+                                     sessionDirectories: .init(), passphrase: "old-store-password", pusherNotificationClientIdentifier: nil)
+        let second = RestorationToken(session: first.session, sessionDirectories: .init(),
+                                      passphrase: "new-store-password", pusherNotificationClientIdentifier: nil)
+        let recovery = Keychain(service: KeychainControllerService.tests.restorationTokenID + ".recovery",
+                                accessGroup: InfoPlistReader.main.keychainAccessGroupIdentifier)
+        let recoveryKey = username + "|" + first.sessionDirectories.dataDirectory.lastPathComponent
+        keychain.setRestorationToken(first, forUsername: username)
+        keychain.setRestorationToken(second, forUsername: username)
+        let saved = try #require(try recovery.getData(recoveryKey))
+        #expect(try JSONDecoder().decode(RestorationToken.self, from: saved) == first)
+        #expect(keychain.restorationTokenForUsername(username) == second)
+        #expect(keychain.restorationTokens().count == 1)
+        keychain.removeRestorationTokenForUsername(username)
+        #expect(try recovery.getData(recoveryKey) == nil)
+    }
+    
+    @Test
     func addRestorationToken() {
         // Given an empty keychain.
         #expect(keychain.restorationTokens().isEmpty, "The keychain should be empty to begin with.")

@@ -65,8 +65,8 @@ struct UserSessionStoreTests {
             return
         }
         
-        // Then the credentials should have been discarded.
-        #expect(keychainController.removeRestorationTokenForUsernameReceivedInvocations == [credentials.userID])
+        // Failed restoration must not discard the only credentials for the crypto store.
+        #expect(keychainController.removeRestorationTokenForUsernameReceivedInvocations.isEmpty)
     }
     
     @Test
@@ -84,8 +84,9 @@ struct UserSessionStoreTests {
             return
         }
         
-        // Then the credentials should have been discarded.
-        #expect(keychainController.removeRestorationTokenForUsernameReceivedInvocations == [credentials.userID])
+        // Failed restoration must not discard the only credentials for the crypto store.
+        #expect(keychainController.removeRestorationTokenForUsernameReceivedInvocations.isEmpty)
+        #expect(sessionDirectories.isNonTransientUserDataValid())
     }
     
     @Test

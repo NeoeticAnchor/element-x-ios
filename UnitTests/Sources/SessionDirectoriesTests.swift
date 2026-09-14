@@ -14,6 +14,22 @@ struct SessionDirectoriesTests {
     let fileManager = FileManager.default
     
     @Test
+    func decodingFollowsRelocatedSandbox() throws {
+        let id = UUID().uuidString
+        let old = SessionDirectories(dataDirectory: URL(filePath: "/old-container/Library/Application Support/" + InfoPlistReader.main.baseBundleIdentifier + "/Sessions/" + id),
+                                     cacheDirectory: URL(filePath: "/old-container/Library/Caches/" + InfoPlistReader.main.baseBundleIdentifier + "/Sessions/" + id))
+        let restored = try JSONDecoder().decode(SessionDirectories.self, from: JSONEncoder().encode(old))
+        #expect(restored.dataDirectory == URL.sessionsBaseDirectory.appending(component: id))
+        #expect(restored.cacheDirectory == URL.sessionCachesBaseDirectory.appending(component: id))
+    }
+    
+    @Test
+    func decodingPreservesUnmanagedPaths() throws {
+        let original = SessionDirectories(dataDirectory: URL(filePath: "/custom/data"), cacheDirectory: URL(filePath: "/custom/cache"))
+        #expect(try JSONDecoder().decode(SessionDirectories.self, from: JSONEncoder().encode(original)) == original)
+    }
+    
+    @Test
     func initWithDataDirectory() {
         // Given only a session directory without a caches directory.
         let sessionDirectoryName = UUID().uuidString
