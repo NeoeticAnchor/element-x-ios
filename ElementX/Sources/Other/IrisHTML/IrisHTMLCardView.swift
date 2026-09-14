@@ -7,6 +7,7 @@ import WebKit
 
 struct IrisHTMLCardView: View {
     let card: IrisHTMLCard
+    var isOutgoing = false
     var collapsed: Binding<Bool>?
     @State private var locallyCollapsed = false
     @State private var contentSize = CGSize(width: 0, height: 80)
@@ -24,25 +25,30 @@ struct IrisHTMLCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if isCollapsed.wrappedValue {
-                Text(card.summary)
-                    .font(.compound.bodyMD)
-                    .lineLimit(3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 10)
-                    .padding(.bottom, 2)
-                    .accessibilityIdentifier("irisHTMLSummary")
-            } else if failed {
-                Text(UntranslatedL10n.irisHtmlRenderFailed)
-                Text(card.summary)
-            } else {
-                IrisHTMLWebView(document: card.document, contentSize: $contentSize, viewport: $viewport, failed: $failed)
-                    .frame(height: layout.height)
-                    .clipped()
-                    .accessibilityIdentifier("irisHTMLInlinePreview")
+            Group {
+                if isCollapsed.wrappedValue {
+                    Text(card.summary)
+                        .font(.compound.bodyMD)
+                        .lineLimit(3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .padding(.top, 10)
+                        .padding(.bottom, 10)
+                        .accessibilityIdentifier("irisHTMLSummary")
+                } else if failed {
+                    Text(UntranslatedL10n.irisHtmlRenderFailed)
+                    Text(card.summary)
+                } else {
+                    IrisHTMLWebView(document: card.document, contentSize: $contentSize, viewport: $viewport, failed: $failed)
+                        .frame(height: layout.height)
+                        .clipped()
+                        .accessibilityIdentifier("irisHTMLInlinePreview")
+                }
             }
+            .background(isOutgoing ? Color.compound._bgBubbleOutgoing : Color.compound._bgBubbleIncoming)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             HStack(spacing: 12) {
+                Spacer(minLength: 0)
                 Button {
                     isCollapsed.wrappedValue.toggle()
                 } label: {
@@ -57,7 +63,6 @@ struct IrisHTMLCardView: View {
                     .contentShape(Rectangle())
                 }
                 .accessibilityIdentifier("irisHTMLToggleCollapse")
-                Spacer(minLength: 0)
                 if isCollapsed.wrappedValue || layout.overflows {
                     Button { showingFullContent = true } label: {
                         HStack(spacing: 4) {
@@ -75,7 +80,7 @@ struct IrisHTMLCardView: View {
             .font(.footnote.weight(.medium))
             .foregroundStyle(Color.compound.textSecondary)
             .buttonStyle(.plain)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .fullScreenCover(isPresented: $showingFullContent) {
@@ -262,6 +267,36 @@ struct IrisHTMLWebView: UIViewRepresentable {
 final class IrisHTMLViewportWebView: WKWebView {
     var viewportChanged: ((CGSize) -> Void)?
     private var lastViewport = CGSize.zero
+    private var orientationObservation: NSObjectProtocol?
+    private var orientationLayoutTask: Task<Void, Never>?
+    
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if let orientationObservation {
+            NotificationCenter.default.removeObserver(orientationObservation)
+            self.orientationObservation = nil
+        }
+        orientationLayoutTask?.cancel()
+        guard window != nil else { return }
+        orientationObservation = NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification,
+                                                                        object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.orientationLayoutTask?.cancel()
+                self?.orientationLayoutTask = Task { @MainActor [weak self] in
+                    // The card can keep the same width during rotation. Wait for the window's transition to finish.
+                    try? await Task.sleep(for: .milliseconds(500))
+                    guard !Task.isCancelled else { return }
+                    self?.setNeedsLayout()
+                    self?.layoutIfNeeded()
+                }
+            }
+        }
+    }
+    
+    override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        setNeedsLayout()
+    }
     
     override func layoutSubviews() {
         super.layoutSubviews()

@@ -18,6 +18,8 @@ final class IrisHTMLCardUITests: XCTestCase {
         XCTAssertTrue(summary.waitForExistence(timeout: 5))
         XCTAssertFalse(app.webViews.firstMatch.exists)
         XCTAssertLessThan(summary.frame.height, 150)
+        XCTAssertGreaterThanOrEqual(toggle.frame.minY, summary.frame.maxY)
+        XCTAssertLessThan(toggle.frame.maxX, app.buttons["irisHTMLViewFullContent"].frame.minX)
         XCTAssertEqual(summary.frame.width, previewWidth, accuracy: 25)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Collapsed HTML summary"

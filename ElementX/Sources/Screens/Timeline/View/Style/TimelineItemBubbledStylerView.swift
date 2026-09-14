@@ -321,6 +321,9 @@ private extension EventBasedTimelineItemProtocol {
         let defaultColor: Color = isOutgoing ? .compound._bgBubbleOutgoing : .compound._bgBubbleIncoming
         
         switch self {
+        case let item as TextRoomTimelineItem where item.content.irisHTMLCard != nil:
+            // The card owns its surface; its trailing controls sit outside that surface.
+            return nil
         case is ImageRoomTimelineItem, is VideoRoomTimelineItem:
             // In case a reply detail or a thread decorator is present we render the color and the padding
             return properties.replyDetails != nil || properties.isThreaded || hasMediaCaption ? defaultColor : nil
@@ -342,6 +345,8 @@ private extension EventBasedTimelineItemProtocol {
         }
         
         switch self {
+        case let item as TextRoomTimelineItem where item.content.irisHTMLCard != nil:
+            return .init(top: 0, leading: 0, bottom: 8, trailing: 0)
         case is StickerRoomTimelineItem:
             return .zero
         case is PollRoomTimelineItem:

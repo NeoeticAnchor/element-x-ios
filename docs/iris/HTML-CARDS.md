@@ -104,3 +104,8 @@ collapsed message. SwiftFormat and SwiftLint pass for the changed files.
 Card actions use secondary-colour footnote labels and small directional chevrons,
 with no filled button chrome. Each action retains a 44-point minimum hit height.
 The refined controls pass all three card UI flows, including rotation.
+
+Expand/Collapse and View all are grouped below the card, aligned to its trailing
+edge on the chat background. Only the HTML or summary has a card surface. The
+timestamp remains separate below the actions. Fixed-width cards also remeasure
+the viewport after device rotation, even when their own width is unchanged.

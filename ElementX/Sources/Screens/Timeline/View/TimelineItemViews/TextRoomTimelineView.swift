@@ -27,7 +27,7 @@ struct TextRoomTimelineView: View, TextBasedRoomTimelineViewProtocol {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
                 if let card = timelineItem.content.irisHTMLCard {
-                    IrisHTMLCardView(card: card, collapsed: htmlCardCollapsed)
+                    IrisHTMLCardView(card: card, isOutgoing: timelineItem.isOutgoing, collapsed: htmlCardCollapsed)
                         .frame(maxWidth: TimelineMediaFrame.maxLinkPreviewWidth)
                         .padding(.bottom, 20)
                 } else if let attributedString = timelineItem.content.formattedBody {
